@@ -1094,13 +1094,41 @@ function renderResults(aiResult) {
   const courses = analysisResults;
   const showAI = aiResult && aiResult.courses;
 
+  // AI 배분값 총합을 budget에 맞게 조정
+  if (showAI) {
+    const aiAlloc = courses.map(c => {
+      const ai = aiResult.courses.find(x => x.priority === c.priority);
+      return ai ? Math.max(1, Math.min(ai.recommended_mileage, c.maxMlg)) : c.recommendedMileage;
+    });
+    let diff = aiAlloc.reduce((s, v) => s + v, 0) - budget;
+    // 초과분 제거: 가장 많이 배분된 과목부터 1씩 감소
+    while (diff > 0) {
+      const idx = aiAlloc.indexOf(Math.max(...aiAlloc));
+      if (aiAlloc[idx] <= 1) break;
+      aiAlloc[idx]--;
+      diff--;
+    }
+    // 부족분 보충: 가장 적게 배분된 과목부터 1씩 증가
+    while (diff < 0) {
+      const maxCaps = courses.map(c => c.maxMlg);
+      const idx = aiAlloc.map((v, i) => v < maxCaps[i] ? v : Infinity).indexOf(Math.min(...aiAlloc.map((v, i) => v < maxCaps[i] ? v : Infinity)));
+      if (idx === -1) break;
+      aiAlloc[idx]++;
+      diff++;
+    }
+    // 조정된 값을 aiResult에 반영
+    courses.forEach((c, i) => {
+      const ai = aiResult.courses.find(x => x.priority === c.priority);
+      if (ai) ai.recommended_mileage = aiAlloc[i];
+    });
+  }
+
   courses.forEach((c, i) => {
     const aiCourse = showAI ? aiResult.courses.find(x => x.priority === c.priority) : null;
-    const mileage = aiCourse ? Math.max(1, Math.min(aiCourse.recommended_mileage, c.maxMlg)) : c.recommendedMileage;
-    const rawProb = aiCourse ? aiCourse.acceptance_probability : c.acceptanceProb;
-    const probNorm = rawProb > 1 ? rawProb / 100 : rawProb;
-    const prob = Math.min(0.95, probNorm);  // AI도 최대 95% 캡
-    const risk = aiCourse ? aiCourse.risk_level : getRiskLevel(c.acceptanceProb);
+    const mileage = aiCourse ? aiCourse.recommended_mileage : c.recommendedMileage;
+    // 확률은 항상 우리 계산값 사용 (AI 값 신뢰 불가, 100% 방지)
+    const prob = Math.min(0.95, c.curve[mileage] || 0);
+    const risk = getRiskLevel(prob);
     const minSafe = aiCourse ? Math.max(1, Math.min(aiCourse.min_safe_mileage, c.maxMlg)) : c.minSafe;
 
     const probPct = Math.round(prob * 100);
