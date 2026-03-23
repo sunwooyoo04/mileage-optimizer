@@ -461,6 +461,7 @@ const state = {
     id: i,
     priority: i+1,
     isMajor: 'N',
+    fratlcYn: 'N',
     data: null,
     filename: '',
     courseId: ''
@@ -508,11 +509,20 @@ function renderCourseGrid() {
           ${[1,2,3,4,5,6].map(n=>`<option value="${n}" ${c.priority==n?'selected':''}>${n}순위</option>`).join('')}
         </select>
       </div>
-      <div class="major-toggle">
-        <label>전공자 여부</label>
-        <div class="toggle-group">
-          <button id="maj-n-${i}" class="${c.isMajor==='N'?'active':''}" onclick="setMajor(${i},'N')">비전공</button>
-          <button id="maj-y-${i}" class="${c.isMajor==='Y'?'active':''}" onclick="setMajor(${i},'Y')">전공</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="major-toggle">
+          <label>전공자 여부</label>
+          <div class="toggle-group">
+            <button id="maj-n-${i}" class="${c.isMajor==='N'?'active':''}" onclick="setMajor(${i},'N')">비전공</button>
+            <button id="maj-y-${i}" class="${c.isMajor==='Y'?'active':''}" onclick="setMajor(${i},'Y')">전공</button>
+          </div>
+        </div>
+        <div class="major-toggle">
+          <label>초수강자 여부</label>
+          <div class="toggle-group">
+            <button id="frat-n-${i}" class="${c.fratlcYn==='N'?'active':''}" onclick="setFratlc(${i},'N')">재수강</button>
+            <button id="frat-y-${i}" class="${c.fratlcYn==='Y'?'active':''}" onclick="setFratlc(${i},'Y')">초수강</button>
+          </div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -548,6 +558,11 @@ function setMajor(idx, val) {
   state.courses[idx].isMajor = val;
   document.getElementById('maj-y-'+idx).classList.toggle('active', val==='Y');
   document.getElementById('maj-n-'+idx).classList.toggle('active', val==='N');
+}
+function setFratlc(idx, val) {
+  state.courses[idx].fratlcYn = val;
+  document.getElementById('frat-y-'+idx).classList.toggle('active', val==='Y');
+  document.getElementById('frat-n-'+idx).classList.toggle('active', val==='N');
 }
 function dzDragOver(e,i) { e.preventDefault(); document.getElementById('dz-'+i).classList.add('drag-over'); }
 function dzDragLeave(i) { document.getElementById('dz-'+i).classList.remove('drag-over'); }
@@ -737,7 +752,7 @@ function compareKeys(a, b) {
 }
 
 // ==================== STATISTICS ====================
-function getUserProfile() {
+function getUserProfile(fratlcYn = 'N') {
   return {
     mlgVal: 0,
     hy: document.getElementById('grade').value,
@@ -745,7 +760,7 @@ function getUserProfile() {
     dsstdYn: state.toggles.dsstd,
     aplySubjcCnt: parseInt(document.getElementById('applyCnt').value) || 6,
     grdtnAplyYn: state.toggles.grdt,
-    fratlcYn: 'N',
+    fratlcYn: fratlcYn,
     ttCmpsjCdtRto: parseFloat(document.getElementById('ttRatio').value) || 0.75,
     jstbfSmtCmpsjCdtRto: parseFloat(document.getElementById('jstbfRatio').value) || 1.0,
     mlgAppcsPrcesDivNm: '?'
@@ -758,8 +773,8 @@ function parseMajorQuota(mjrprPercpCnt) {
   return m ? parseInt(m[1]) : null;
 }
 
-function calcAcceptanceForMileage(courseData, mileage, isMajor) {
-  const profile = getUserProfile();
+function calcAcceptanceForMileage(courseData, mileage, isMajor, fratlcYn='N') {
+  const profile = getUserProfile(fratlcYn);
   profile.mlgVal = mileage;
   profile.mjsbjYn = isMajor;
   const profileKey = priorityKey(profile);
@@ -813,7 +828,7 @@ function calcAcceptanceForMileage(courseData, mileage, isMajor) {
   return counted > 0 ? admitted / counted : 0;
 }
 
-function buildProbabilityCurve(courseData, isMajor) {
+function buildProbabilityCurve(courseData, isMajor, fratlcYn='N') {
   // 실제 Y 합격자들의 최대 마일리지로 계산 (summary.maxMlg 오류 방지)
   const allYMlg = courseData.semesters.flatMap(s =>
     s.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y').map(r => r.mlgVal || 0)
@@ -821,7 +836,7 @@ function buildProbabilityCurve(courseData, isMajor) {
   const maxMlg = allYMlg.length > 0 ? Math.min(36, Math.max(...allYMlg)) : 36;
   const curve = {};
   for (let m = 1; m <= 36; m++) {
-    curve[m] = calcAcceptanceForMileage(courseData, m, isMajor);
+    curve[m] = calcAcceptanceForMileage(courseData, m, isMajor, fratlcYn);
   }
   return {curve, maxMlg};
 }
@@ -891,7 +906,7 @@ async function startAnalysis() {
     const c = activeCourses[i];
     setProgress(true, (i+1)/activeCourses.length * 40, `${c.data.course_info.subjtNm} 분석 중...`);
     await sleep(10);
-    const {curve, maxMlg} = buildProbabilityCurve(c.data, c.isMajor);
+    const {curve, maxMlg} = buildProbabilityCurve(c.data, c.isMajor, c.fratlcYn || 'N');
     courseResults.push({
       priority: c.priority,
       isMajor: c.isMajor,
@@ -1243,9 +1258,14 @@ function renderTrendAnalysis(courses) {
       if (capChange < 0) comment.push(`정원이 ${Math.abs(capChange)}명 줄었습니다.`);
       else if (capChange > 0) comment.push(`정원이 ${capChange}명 늘었습니다.`);
       if (minChange > 0) comment.push(`합격 최소 마일리지가 ${minChange}점 올랐습니다.`);
-      if (latest.nMax >= latest.yMin) comment.push(`⚠️ 최근 학기에 ${latest.nMax}점을 넣고도 떨어진 사람이 있습니다. 마일리지 외 조건도 영향을 미칩니다.`);
+      if (latest.nMax >= latest.yMin) comment.push(`⚠️ 최근 학기에 ${latest.nMax}점을 넣고도 떨어진 사람이 있습니다. 마일리지 외 조건(이수비율 등)도 당락에 영향을 미칩니다.`);
     }
-
+    // 모든 학기에서 해당 패턴 체크
+    stats.forEach((s, i) => {
+      if (s.nCount > 0 && s.nMax >= s.yMin && i !== stats.length - 1) {
+        comment.push(`⚠️ ${sems[i].name}: ${s.nMax}점 넣고도 불합격한 사람이 있었습니다.`);
+      }
+    });
     const overallTrend = sems.length >= 2
       ? (latest.yAvg - stats[0].yAvg > 2 ? '📈 전체 경쟁 심화 추세' : latest.yAvg - stats[0].yAvg < -2 ? '📉 전체 경쟁 완화 추세' : '➡️ 전체적으로 안정적')
       : '';
