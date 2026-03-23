@@ -833,26 +833,22 @@ function buildProbabilityCurve(courseData, isMajor, fratlcYn='N') {
 
 // ==================== OPTIMIZATION ====================
 function optimize(courses, budget) {
-  // courses: [{priority, curve, maxMlg, ...}]
-  // weight: priority 1 = 6, ..., priority 6 = 1
   const n = courses.length;
   if (n === 0) return [];
 
   const maxPerCourse = courses.map(c => c.maxMlg);
+  const logProb = (p) => Math.log(Math.max(p, 0.01)); // 확률 0 방지
 
-  // Greedy + local search approach
+  // Greedy: 1점 추가 시 log(확률) 증가가 가장 큰 과목에 배분
+  // → 확률 곱 최대화 = 6과목 모두 붙을 확률 최대화 → 자연스럽게 골고루 배분
   let alloc = courses.map(() => 1);
   let remaining = budget - n;
 
-  // Score function — 모든 과목 동일 가중치, 전체 합격확률 합산 최대화
-  const score = (alloc) => alloc.reduce((sum, m, i) => sum + (courses[i].curve[m] || 0), 0);
-
-  // Greedy: add 1 mileage to the course with the highest marginal gain
   while (remaining > 0) {
     let bestGain = -Infinity, bestIdx = -1;
     for (let i = 0; i < n; i++) {
       if (alloc[i] >= maxPerCourse[i]) continue;
-      const gain = (courses[i].curve[alloc[i]+1] || 0) - (courses[i].curve[alloc[i]] || 0);
+      const gain = logProb(courses[i].curve[alloc[i]+1] || 0) - logProb(courses[i].curve[alloc[i]] || 0);
       if (gain > bestGain) { bestGain = gain; bestIdx = i; }
     }
     if (bestIdx === -1) break;
