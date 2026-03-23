@@ -1090,10 +1090,10 @@ function renderResults(aiResult) {
 
   courses.forEach((c, i) => {
     const aiCourse = showAI ? aiResult.courses.find(x => x.priority === c.priority) : null;
-    const mileage = aiCourse ? aiCourse.recommended_mileage : c.recommendedMileage;
+    const mileage = aiCourse ? Math.min(aiCourse.recommended_mileage, c.maxMlg) : c.recommendedMileage;
     const prob = aiCourse ? aiCourse.acceptance_probability : c.acceptanceProb;
     const risk = aiCourse ? aiCourse.risk_level : getRiskLevel(c.acceptanceProb);
-    const minSafe = aiCourse ? aiCourse.min_safe_mileage : c.minSafe;
+    const minSafe = aiCourse ? Math.min(aiCourse.min_safe_mileage, c.maxMlg) : c.minSafe;
 
     const probPct = Math.round((prob > 1 ? prob/100 : prob) * 100);
     const probVal = prob > 1 ? prob/100 : prob;
@@ -1140,7 +1140,12 @@ function renderResults(aiResult) {
 
     const altBox = document.getElementById('altBox');
     const alt = aiResult.alternative_distribution;
-    altBox.innerHTML = `<p>${alt.description}</p><div class="alt-course-list">${(alt.courses||[]).map(c=>`<div class="alt-course-pill">${c.priority}순위: ${c.course_name} → ${c.recommended_mileage}점</div>`).join('')}</div>`;
+    const altCourses = (alt.courses||[]).map(ac => {
+      const matched = courses.find(c => c.priority === ac.priority);
+      const cap = matched ? matched.maxMlg : 36;
+      return {...ac, recommended_mileage: Math.min(ac.recommended_mileage, cap)};
+    });
+    altBox.innerHTML = `<p>${alt.description}</p><div class="alt-course-list">${altCourses.map(c=>`<div class="alt-course-pill">${c.priority}순위: ${c.course_name} → ${c.recommended_mileage}점</div>`).join('')}</div>`;
     if (alt.courses && alt.courses[0]) {
       altBox.innerHTML += `<div style="margin-top:14px;font-size:0.83rem;color:var(--gray-700)">`;
       alt.courses.forEach(c => { altBox.innerHTML += `<p style="margin-bottom:6px"><strong>${c.course_name}:</strong> ${c.reasoning}</p>`; });
@@ -1161,88 +1166,104 @@ function renderResults(aiResult) {
   renderCharts(courses);
 }
 
+function semStats(sem) {
+  const y = sem.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
+  const n = sem.ranks.filter(r => r.mlgAppcsPrcesDivNm !== 'Y');
+  return {
+    cap: sem.summary.atnlcPercpCnt,
+    total: sem.ranks.length,
+    yCount: y.length,
+    yMin: y.length ? Math.min(...y.map(r => r.mlgVal||0)) : 0,
+    yAvg: y.length ? Math.round(y.reduce((s,r)=>s+(r.mlgVal||0),0)/y.length) : 0,
+    yMax: y.length ? Math.max(...y.map(r => r.mlgVal||0)) : 0,
+    nCount: n.length,
+    nMax: n.length ? Math.max(...n.map(r => r.mlgVal||0)) : 0,
+    nAvg: n.length ? Math.round(n.reduce((s,r)=>s+(r.mlgVal||0),0)/n.length) : 0,
+    compRatio: sem.ranks.length ? (sem.ranks.length / sem.summary.atnlcPercpCnt).toFixed(1) : '-',
+  };
+}
+
 function renderTrendAnalysis(courses) {
   const container = document.getElementById('trendAnalysis');
   container.innerHTML = '';
 
   courses.forEach(c => {
     const sems = c.semesters;
-    if (sems.length < 2) {
-      container.innerHTML += `<div class="course-analysis-item" style="margin-bottom:14px">
-        <h4>${c.courseName}</h4>
-        <p>데이터가 1개 학기뿐이라 트렌드 비교가 어렵습니다.</p>
-      </div>`;
-      return;
-    }
+    if (sems.length < 1) return;
 
-    const latest = sems[sems.length - 1];
-    const prev = sems[sems.length - 2];
-    const latestY = latest.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
-    const prevY = prev.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
+    const stats = sems.map(s => semStats(s));
+    const latest = stats[stats.length - 1];
+    const hasN = stats.some(s => s.nCount > 0);
 
-    const latestN = latest.ranks.filter(r => r.mlgAppcsPrcesDivNm !== 'Y');
-    const prevN = prev.ranks.filter(r => r.mlgAppcsPrcesDivNm !== 'Y');
+    // 헤더: 항목 | 학기1 | 학기2 | ...
+    const thCols = sems.map((s, i) => {
+      const isLatest = i === sems.length - 1;
+      return `<th style="${isLatest ? 'background:#0f2244' : ''}">${s.name}${isLatest ? ' ★' : ''}</th>`;
+    }).join('');
 
-    const latestMinMlg = latestY.length ? Math.min(...latestY.map(r => r.mlgVal || 0)) : 0;
-    const prevMinMlg = prevY.length ? Math.min(...prevY.map(r => r.mlgVal || 0)) : 0;
-    const latestMaxMlg = latestY.length ? Math.max(...latestY.map(r => r.mlgVal || 0)) : 0;
-    const prevMaxMlg = prevY.length ? Math.max(...prevY.map(r => r.mlgVal || 0)) : 0;
-    const latestAvgMlg = latestY.length ? Math.round(latestY.reduce((s,r)=>s+(r.mlgVal||0),0)/latestY.length) : 0;
-    const prevAvgMlg = prevY.length ? Math.round(prevY.reduce((s,r)=>s+(r.mlgVal||0),0)/prevY.length) : 0;
+    const mkRow = (label, fn, bg, colorFn) => {
+      const cells = stats.map((s, i) => {
+        const val = fn(s);
+        const prev = i > 0 ? fn(stats[i-1]) : null;
+        const diff = prev !== null ? val - prev : null;
+        const color = colorFn && diff !== null ? colorFn(diff) : '';
+        const arrow = diff !== null && diff !== 0 ? `<small style="color:${color}">(${diff>0?'+':''}${diff})</small>` : '';
+        return `<td style="background:${bg};text-align:center">${val}${arrow}</td>`;
+      }).join('');
+      return `<tr><td style="background:${bg};font-size:0.82rem">${label}</td>${cells}</tr>`;
+    };
 
-    // 불합격자 마일리지 분석
-    const latestNMax = latestN.length ? Math.max(...latestN.map(r => r.mlgVal || 0)) : 0;
-    const prevNMax = prevN.length ? Math.max(...prevN.map(r => r.mlgVal || 0)) : 0;
-    const latestNAvg = latestN.length ? Math.round(latestN.reduce((s,r)=>s+(r.mlgVal||0),0)/latestN.length) : 0;
-    const prevNAvg = prevN.length ? Math.round(prevN.reduce((s,r)=>s+(r.mlgVal||0),0)/prevN.length) : 0;
-
-    const capChange = latest.summary.atnlcPercpCnt - prev.summary.atnlcPercpCnt;
-    const minChange = latestMinMlg - prevMinMlg;
-    const avgChange = latestAvgMlg - prevAvgMlg;
-    const totalLatest = latest.ranks.length;
-    const totalPrev = prev.ranks.length;
-    const compRatioLatest = (totalLatest / latest.summary.atnlcPercpCnt).toFixed(1);
-    const compRatioPrev = (totalPrev / prev.summary.atnlcPercpCnt).toFixed(1);
-
-    const trend = avgChange > 2 ? '📈 경쟁 심화' : avgChange < -2 ? '📉 경쟁 완화' : '➡️ 비슷한 수준';
-    const capTrend = capChange > 0 ? `정원 ${capChange}명 증가` : capChange < 0 ? `정원 ${Math.abs(capChange)}명 감소` : '정원 동일';
+    const redUp = d => d > 0 ? 'var(--red)' : d < 0 ? 'var(--green)' : 'var(--gray-500)';
+    const greenUp = d => d > 0 ? 'var(--green)' : d < 0 ? 'var(--red)' : 'var(--gray-500)';
 
     let rows = '';
-    rows += `<tr><td style="font-weight:600;background:#f8f9fa">학기</td><td style="font-weight:600">${prev.name}</td><td style="font-weight:600">${latest.name}</td></tr>`;
-    rows += `<tr><td>정원</td><td>${prev.summary.atnlcPercpCnt}명</td><td>${latest.summary.atnlcPercpCnt}명 <small style="color:${capChange>0?'var(--green)':capChange<0?'var(--red)':'var(--gray-500)'}">(${capChange>=0?'+':''}${capChange})</small></td></tr>`;
-    rows += `<tr><td>전체 지원자</td><td>${totalPrev}명</td><td>${totalLatest}명</td></tr>`;
-    rows += `<tr><td>경쟁률</td><td>${compRatioPrev}:1</td><td>${compRatioLatest}:1</td></tr>`;
-    rows += `<tr><td style="background:#e8f5e9">합격자 수 (Y)</td><td style="background:#e8f5e9">${prevY.length}명</td><td style="background:#e8f5e9">${latestY.length}명</td></tr>`;
-    rows += `<tr><td style="background:#e8f5e9">합격 최소 마일리지</td><td style="background:#e8f5e9">${prevMinMlg}점</td><td style="background:#e8f5e9">${latestMinMlg}점 <small style="color:${minChange>0?'var(--red)':minChange<0?'var(--green)':'var(--gray-500)'}">(${minChange>=0?'+':''}${minChange})</small></td></tr>`;
-    rows += `<tr><td style="background:#e8f5e9">합격 평균 마일리지</td><td style="background:#e8f5e9">${prevAvgMlg}점</td><td style="background:#e8f5e9">${latestAvgMlg}점 <small style="color:${avgChange>0?'var(--red)':avgChange<0?'var(--green)':'var(--gray-500)'}">(${avgChange>=0?'+':''}${avgChange})</small></td></tr>`;
-    rows += `<tr><td style="background:#e8f5e9">합격 최대 마일리지</td><td style="background:#e8f5e9">${prevMaxMlg}점</td><td style="background:#e8f5e9">${latestMaxMlg}점</td></tr>`;
-    if (latestN.length > 0 || prevN.length > 0) {
-      rows += `<tr><td style="background:#ffeef0">불합격자 수 (N)</td><td style="background:#ffeef0">${prevN.length}명</td><td style="background:#ffeef0">${latestN.length}명</td></tr>`;
-      rows += `<tr><td style="background:#ffeef0">불합격 최고 마일리지</td><td style="background:#ffeef0">${prevNMax}점</td><td style="background:#ffeef0">${latestNMax}점</td></tr>`;
-      rows += `<tr><td style="background:#ffeef0">불합격 평균 마일리지</td><td style="background:#ffeef0">${prevNAvg}점</td><td style="background:#ffeef0">${latestNAvg}점</td></tr>`;
+    rows += mkRow('정원', s=>`${s.cap}명`, '#f8f9fa', greenUp);
+    rows += mkRow('전체 지원자', s=>`${s.total}명`, '#f8f9fa', redUp);
+    rows += mkRow('경쟁률', s=>`${s.compRatio}:1`, '#f8f9fa', null);
+    rows += mkRow('합격자 수', s=>`${s.yCount}명`, '#e8f5e9', null);
+    rows += mkRow('합격 최소 마일리지', s=>`${s.yMin}점`, '#e8f5e9', redUp);
+    rows += mkRow('합격 평균 마일리지', s=>`${s.yAvg}점`, '#e8f5e9', redUp);
+    rows += mkRow('합격 최대 마일리지', s=>`${s.yMax}점`, '#e8f5e9', null);
+    if (hasN) {
+      rows += mkRow('불합격자 수', s=>`${s.nCount}명`, '#ffeef0', null);
+      rows += mkRow('불합격 최고 마일리지', s=>`${s.nMax}점`, '#ffeef0', null);
+      rows += mkRow('불합격 평균 마일리지', s=>`${s.nAvg}점`, '#ffeef0', null);
     }
 
+    // 트렌드 코멘트 (최근 2학기 비교)
     const comment = [];
-    if (avgChange > 2) comment.push(`합격자 평균 마일리지가 ${avgChange}점 올랐습니다. 경쟁이 심해지고 있어 더 높은 마일리지가 필요합니다.`);
-    else if (avgChange < -2) comment.push(`합격자 평균 마일리지가 ${Math.abs(avgChange)}점 내렸습니다. 경쟁이 완화되고 있습니다.`);
-    else comment.push('합격자 평균 마일리지 변화가 크지 않아 안정적인 편입니다.');
-    if (capChange < 0) comment.push(`정원이 ${Math.abs(capChange)}명 줄어 합격이 더 어려워졌습니다.`);
-    else if (capChange > 0) comment.push(`정원이 ${capChange}명 늘어 합격 기회가 넓어졌습니다.`);
-    if (minChange > 0) comment.push(`합격 최소 마일리지가 ${minChange}점 올라 최소 투입량도 높아지고 있습니다.`);
-    if (latestNMax >= latestMinMlg) comment.push(`⚠️ ${latest.name} 기준으로 ${latestNMax}점을 넣고도 떨어진 사람이 있습니다. 마일리지 외 다른 우선순위 조건이 영향을 미칠 수 있습니다.`);
+    if (sems.length >= 2) {
+      const prev = stats[stats.length - 2];
+      const avgChange = latest.yAvg - prev.yAvg;
+      const capChange = latest.cap - prev.cap;
+      const minChange = latest.yMin - prev.yMin;
+      if (avgChange > 2) comment.push(`합격자 평균 마일리지가 ${avgChange}점 올랐습니다. 경쟁이 심해지고 있습니다.`);
+      else if (avgChange < -2) comment.push(`합격자 평균 마일리지가 ${Math.abs(avgChange)}점 내렸습니다. 경쟁이 완화되고 있습니다.`);
+      else comment.push('최근 두 학기 간 평균 마일리지 변화가 크지 않아 안정적입니다.');
+      if (capChange < 0) comment.push(`정원이 ${Math.abs(capChange)}명 줄었습니다.`);
+      else if (capChange > 0) comment.push(`정원이 ${capChange}명 늘었습니다.`);
+      if (minChange > 0) comment.push(`합격 최소 마일리지가 ${minChange}점 올랐습니다.`);
+      if (latest.nMax >= latest.yMin) comment.push(`⚠️ 최근 학기에 ${latest.nMax}점을 넣고도 떨어진 사람이 있습니다. 마일리지 외 조건도 영향을 미칩니다.`);
+    }
+
+    const overallTrend = sems.length >= 2
+      ? (latest.yAvg - stats[0].yAvg > 2 ? '📈 전체 경쟁 심화 추세' : latest.yAvg - stats[0].yAvg < -2 ? '📉 전체 경쟁 완화 추세' : '➡️ 전체적으로 안정적')
+      : '';
 
     container.innerHTML += `
-      <div style="margin-bottom:20px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <strong style="color:var(--navy)">${c.courseName}</strong>
-          <span style="font-size:0.82rem;font-weight:600;color:var(--gray-700)">${trend} (${capTrend})</span>
+      <div style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <strong style="color:var(--navy);font-size:1rem">${c.courseName}</strong>
+          <span style="font-size:0.82rem;font-weight:600;color:var(--gray-700)">${overallTrend}</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">(${sems.length}개 학기 데이터)</span>
         </div>
-        <table class="result-table" style="font-size:0.85rem">
-          <tbody>${rows}</tbody>
-        </table>
-        <div style="margin-top:10px;padding:10px 14px;background:var(--accent-light);border-radius:var(--radius-sm);font-size:0.85rem;line-height:1.7">
-          ${comment.join(' ')}
+        <div style="overflow-x:auto">
+          <table class="result-table" style="font-size:0.83rem;min-width:${120 + sems.length * 130}px">
+            <thead><tr><th>항목</th>${thCols}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
+        ${comment.length ? `<div style="margin-top:10px;padding:10px 14px;background:var(--accent-light);border-radius:var(--radius-sm);font-size:0.85rem;line-height:1.7">${comment.join(' ')}</div>` : ''}
       </div>`;
   });
 }
