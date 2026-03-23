@@ -1095,14 +1095,15 @@ function renderResults(aiResult) {
 
   courses.forEach((c, i) => {
     const aiCourse = showAI ? aiResult.courses.find(x => x.priority === c.priority) : null;
-    const mileage = aiCourse ? Math.min(aiCourse.recommended_mileage, c.maxMlg) : c.recommendedMileage;
-    const prob = aiCourse ? aiCourse.acceptance_probability : c.acceptanceProb;
+    const mileage = aiCourse ? Math.max(1, Math.min(aiCourse.recommended_mileage, c.maxMlg)) : c.recommendedMileage;
+    const rawProb = aiCourse ? aiCourse.acceptance_probability : c.acceptanceProb;
+    const probNorm = rawProb > 1 ? rawProb / 100 : rawProb;
+    const prob = Math.min(0.95, probNorm);  // AI도 최대 95% 캡
     const risk = aiCourse ? aiCourse.risk_level : getRiskLevel(c.acceptanceProb);
-    const minSafe = aiCourse ? Math.min(aiCourse.min_safe_mileage, c.maxMlg) : c.minSafe;
+    const minSafe = aiCourse ? Math.max(1, Math.min(aiCourse.min_safe_mileage, c.maxMlg)) : c.minSafe;
 
-    const probPct = Math.round((prob > 1 ? prob/100 : prob) * 100);
-    const probVal = prob > 1 ? prob/100 : prob;
-    const barColor = probVal >= 0.7 ? 'var(--green)' : probVal >= 0.4 ? 'var(--yellow)' : 'var(--red)';
+    const probPct = Math.round(prob * 100);
+    const barColor = prob >= 0.7 ? 'var(--green)' : prob >= 0.4 ? 'var(--yellow)' : 'var(--red)';
 
     tbody.innerHTML += `<tr>
       <td><strong>${c.priority}순위</strong></td>
