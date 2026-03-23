@@ -837,12 +837,17 @@ function optimize(courses, budget) {
   if (n === 0) return [];
 
   const maxPerCourse = courses.map(c => c.maxMlg);
-  const logProb = (p) => Math.log(Math.max(p, 0.01)); // 확률 0 방지
+  const logProb = (p) => Math.log(Math.max(p, 0.01));
 
-  // Greedy: 1점 추가 시 log(확률) 증가가 가장 큰 과목에 배분
-  // → 확률 곱 최대화 = 6과목 모두 붙을 확률 최대화 → 자연스럽게 골고루 배분
+  // 1단계: 각 과목을 최소 20% 확률 지점까지 우선 배분 (0% 방지)
   let alloc = courses.map(() => 1);
   let remaining = budget - n;
+  for (let i = 0; i < n && remaining > 0; i++) {
+    while (alloc[i] < maxPerCourse[i] && remaining > 0 && (courses[i].curve[alloc[i]] || 0) < 0.2) {
+      alloc[i]++;
+      remaining--;
+    }
+  }
 
   while (remaining > 0) {
     let bestGain = -Infinity, bestIdx = -1;
