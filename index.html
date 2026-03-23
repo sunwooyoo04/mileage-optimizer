@@ -1101,19 +1101,28 @@ function renderResults(aiResult) {
       return ai ? Math.max(1, Math.min(ai.recommended_mileage, c.maxMlg)) : c.recommendedMileage;
     });
     let diff = aiAlloc.reduce((s, v) => s + v, 0) - budget;
-    // 초과분 제거: 가장 많이 배분된 과목부터 1씩 감소
+    // 초과분 제거: 1점 줄였을 때 확률 손실이 가장 적은 과목부터
     while (diff > 0) {
-      const idx = aiAlloc.indexOf(Math.max(...aiAlloc));
-      if (aiAlloc[idx] <= 1) break;
-      aiAlloc[idx]--;
+      let bestLoss = Infinity, bestIdx = -1;
+      for (let i = 0; i < courses.length; i++) {
+        if (aiAlloc[i] <= 1) continue;
+        const loss = (courses[i].curve[aiAlloc[i]] || 0) - (courses[i].curve[aiAlloc[i] - 1] || 0);
+        if (loss < bestLoss) { bestLoss = loss; bestIdx = i; }
+      }
+      if (bestIdx === -1) break;
+      aiAlloc[bestIdx]--;
       diff--;
     }
-    // 부족분 보충: 가장 적게 배분된 과목부터 1씩 증가
+    // 부족분 보충: 1점 추가했을 때 확률 이득이 가장 큰 과목부터
     while (diff < 0) {
-      const maxCaps = courses.map(c => c.maxMlg);
-      const idx = aiAlloc.map((v, i) => v < maxCaps[i] ? v : Infinity).indexOf(Math.min(...aiAlloc.map((v, i) => v < maxCaps[i] ? v : Infinity)));
-      if (idx === -1) break;
-      aiAlloc[idx]++;
+      let bestGain = -Infinity, bestIdx = -1;
+      for (let i = 0; i < courses.length; i++) {
+        if (aiAlloc[i] >= courses[i].maxMlg) continue;
+        const gain = (courses[i].curve[aiAlloc[i] + 1] || 0) - (courses[i].curve[aiAlloc[i]] || 0);
+        if (gain > bestGain) { bestGain = gain; bestIdx = i; }
+      }
+      if (bestIdx === -1) break;
+      aiAlloc[bestIdx]++;
       diff++;
     }
     // 조정된 값을 aiResult에 반영
