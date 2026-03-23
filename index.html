@@ -461,7 +461,7 @@ const state = {
     id: i,
     priority: i+1,
     isMajor: 'N',
-    fratlcYn: 'N',
+    fratlcYn: 'Y',
     data: null,
     filename: '',
     courseId: ''
@@ -520,8 +520,8 @@ function renderCourseGrid() {
         <div class="major-toggle">
           <label>초수강자 여부</label>
           <div class="toggle-group">
-            <button id="frat-n-${i}" class="${c.fratlcYn==='N'?'active':''}" onclick="setFratlc(${i},'N')">재수강</button>
             <button id="frat-y-${i}" class="${c.fratlcYn==='Y'?'active':''}" onclick="setFratlc(${i},'Y')">초수강</button>
+            <button id="frat-n-${i}" class="${c.fratlcYn==='N'?'active':''}" onclick="setFratlc(${i},'N')">재수강</button>
           </div>
         </div>
       </div>
