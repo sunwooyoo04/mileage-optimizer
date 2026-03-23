@@ -791,27 +791,31 @@ function calcAcceptanceForMileage(courseData, mileage, isMajor, fratlcYn='N') {
     pool.sort((a, b) => compareKeys(priorityKey(a), priorityKey(b)));
 
     const capacity = sem.summary.atnlcPercpCnt;
+    // 이번 학기 경쟁자 수를 알 수 없으므로 유효 정원을 15% 줄여 보수적으로 계산
+    const effectiveCap = Math.max(1, Math.floor(capacity * 0.85));
     const majorQuota = parseMajorQuota(sem.summary.mjrprPercpCnt);
     const userIdx = pool.indexOf(profile);
 
     if (majorQuota && majorQuota > 0) {
+      const effectiveMajorQuota = Math.max(1, Math.floor(majorQuota * 0.85));
       if (isMajor === 'Y') {
         const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
         const userMajorIdx = majorPool.indexOf(profile);
-        if (userMajorIdx !== -1 && userMajorIdx < majorQuota) admitted++;
+        if (userMajorIdx !== -1 && userMajorIdx < effectiveMajorQuota) admitted++;
       } else {
         const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
-        const actualMajor = Math.min(majorPool.length - (majorPool.includes(profile) ? 1 : 0), majorQuota);
-        const genCap = capacity - actualMajor;
+        const actualMajor = Math.min(majorPool.length - (majorPool.includes(profile) ? 1 : 0), effectiveMajorQuota);
+        const genCap = effectiveCap - actualMajor;
         const genPool = pool.filter(r => (r.mjsbjYn||'N')[0] !== 'Y');
         const userGenIdx = genPool.indexOf(profile);
         if (userGenIdx !== -1 && userGenIdx < genCap) admitted++;
       }
     } else {
-      if (userIdx !== -1 && userIdx < capacity) admitted++;
+      if (userIdx !== -1 && userIdx < effectiveCap) admitted++;
     }
   }
-  return counted > 0 ? admitted / counted : 0;
+  // 최대 93%로 제한 — 이번 학기 경쟁 불확실성 반영
+  return counted > 0 ? Math.min(0.93, admitted / counted) : 0;
 }
 
 function buildProbabilityCurve(courseData, isMajor, fratlcYn='N') {
