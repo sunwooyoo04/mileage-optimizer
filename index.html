@@ -777,52 +777,38 @@ function calcAcceptanceForMileage(courseData, mileage, isMajor, fratlcYn='N') {
   const profile = getUserProfile(fratlcYn);
   profile.mlgVal = mileage;
   profile.mjsbjYn = isMajor;
-  const profileKey = priorityKey(profile);
 
   const semesters = courseData.semesters;
   let admitted = 0;
   let counted = 0;
 
   for (const sem of semesters) {
-    // 수강여부Y인 실제 합격자만 표본으로 사용
-    const yRanks = sem.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
-    if (!yRanks.length) continue;
+    if (!sem.ranks.length) continue;
     counted++;
+
+    // 전체 지원자(Y+N)를 경쟁 풀로 사용 — Y만 쓰면 N인 경쟁자를 무시해 확률 과대평가됨
+    const pool = [...sem.ranks, profile];
+    pool.sort((a, b) => compareKeys(priorityKey(a), priorityKey(b)));
 
     const capacity = sem.summary.atnlcPercpCnt;
     const majorQuota = parseMajorQuota(sem.summary.mjrprPercpCnt);
+    const userIdx = pool.indexOf(profile);
 
     if (majorQuota && majorQuota > 0) {
       if (isMajor === 'Y') {
-        const yMajor = yRanks.filter(r => (r.mjsbjYn||'N')[0] === 'Y')
-          .sort((a,b) => compareKeys(priorityKey(a), priorityKey(b)));
-        if (yMajor.length < majorQuota) {
-          admitted++;
-        } else {
-          const cutoff = priorityKey(yMajor[majorQuota - 1]);
-          if (compareKeys(profileKey, cutoff) <= 0) admitted++;
-        }
+        const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
+        const userMajorIdx = majorPool.indexOf(profile);
+        if (userMajorIdx !== -1 && userMajorIdx < majorQuota) admitted++;
       } else {
-        const yMajor = yRanks.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
-        const yGeneral = yRanks.filter(r => (r.mjsbjYn||'N')[0] !== 'Y')
-          .sort((a,b) => compareKeys(priorityKey(a), priorityKey(b)));
-        const actualMajor = Math.min(yMajor.length, majorQuota);
+        const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
+        const actualMajor = Math.min(majorPool.length - (majorPool.includes(profile) ? 1 : 0), majorQuota);
         const genCap = capacity - actualMajor;
-        if (yGeneral.length < genCap) {
-          admitted++;
-        } else {
-          const cutoff = priorityKey(yGeneral[genCap - 1]);
-          if (compareKeys(profileKey, cutoff) <= 0) admitted++;
-        }
+        const genPool = pool.filter(r => (r.mjsbjYn||'N')[0] !== 'Y');
+        const userGenIdx = genPool.indexOf(profile);
+        if (userGenIdx !== -1 && userGenIdx < genCap) admitted++;
       }
     } else {
-      const ySorted = [...yRanks].sort((a,b) => compareKeys(priorityKey(a), priorityKey(b)));
-      if (ySorted.length < capacity) {
-        admitted++;
-      } else {
-        const cutoff = priorityKey(ySorted[capacity - 1]);
-        if (compareKeys(profileKey, cutoff) <= 0) admitted++;
-      }
+      if (userIdx !== -1 && userIdx < capacity) admitted++;
     }
   }
   return counted > 0 ? admitted / counted : 0;
