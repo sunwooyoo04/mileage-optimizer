@@ -1004,8 +1004,9 @@ ${JSON.stringify(coursesSummary, null, 2)}
 2. 각 과목별로 한국어로 상세한 reasoning을 작성하세요 (왜 이 마일리지를 추천하는지, 리스크는 무엇인지)
 3. risk_level은 합격확률 70% 이상=low, 40~70%=medium, 40% 미만=high
 4. min_safe_mileage는 합격확률 50% 이상이 되는 최소 마일리지
-5. 보수적 대안 배분도 제시하세요 (안정적인 과목에 더 집중)
-6. 주의사항(warnings)을 한국어로 작성하세요`;
+5. acceptance_probability는 반드시 0~95 범위의 숫자로 반환하세요 (절대 100을 반환하지 마세요)
+6. 보수적 대안 배분도 제시하세요 (안정적인 과목에 더 집중)
+7. 주의사항(warnings)을 한국어로 작성하세요`;
 
   const schema = {
     "type": "object",
@@ -1024,7 +1025,7 @@ ${JSON.stringify(coursesSummary, null, 2)}
             "priority": {"type": "integer"},
             "course_name": {"type": "string"},
             "recommended_mileage": {"type": "integer"},
-            "acceptance_probability": {"type": "number"},
+            "acceptance_probability": {"type": "number", "minimum": 0, "maximum": 95},
             "risk_level": {"type": "string", "enum": ["low","medium","high"]},
             "min_safe_mileage": {"type": "integer"},
             "reasoning": {"type": "string"}
