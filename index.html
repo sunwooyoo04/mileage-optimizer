@@ -989,6 +989,11 @@ async function callOpenRouter(apiKey, courseResults, budget) {
 ## 과목별 통계 분석 결과
 ${JSON.stringify(coursesSummary, null, 2)}
 
+## 중요 제약사항 (반드시 지킬 것)
+- 각 과목의 추천 마일리지는 반드시 해당 과목의 maxMlg 이하여야 합니다
+- 보수적 대안 배분도 마찬가지로 maxMlg를 초과할 수 없습니다
+- 총 배분 마일리지 합계가 예산(${budget}점)을 초과하면 안 됩니다
+
 ## 요청사항
 1. 위 통계 기반 최적 배분을 검토하고 필요시 조정하세요
 2. 각 과목별로 한국어로 상세한 reasoning을 작성하세요 (왜 이 마일리지를 추천하는지, 리스크는 무엇인지)
