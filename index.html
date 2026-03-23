@@ -814,8 +814,8 @@ function calcAcceptanceForMileage(courseData, mileage, isMajor, fratlcYn='N') {
       if (userIdx !== -1 && userIdx < effectiveCap) admitted++;
     }
   }
-  // 최대 93%로 제한 — 이번 학기 경쟁 불확실성 반영
-  return counted > 0 ? Math.min(0.93, admitted / counted) : 0;
+  // 최대 95%로 제한 — 이번 학기 경쟁 불확실성 반영
+  return counted > 0 ? Math.min(0.95, admitted / counted) : 0;
 }
 
 function buildProbabilityCurve(courseData, isMajor, fratlcYn='N') {
