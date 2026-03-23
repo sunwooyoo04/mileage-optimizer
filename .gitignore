@@ -1,5 +1,7 @@
-*.py
-*.js
+yonsei_mileage_scraper.py
+openrouter_example.py
+openrouter_example.js
 *.pdf
 node_modules/
 .vercel/
+.vercel
