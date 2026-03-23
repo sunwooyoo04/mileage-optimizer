@@ -999,6 +999,8 @@ ${JSON.stringify(coursesSummary, null, 2)}
 
   const schema = {
     "type": "object",
+    "additionalProperties": false,
+    "required": ["strategy_summary","total_mileage_used","courses","warnings","alternative_distribution"],
     "properties": {
       "strategy_summary": {"type": "string"},
       "total_mileage_used": {"type": "integer"},
@@ -1006,6 +1008,8 @@ ${JSON.stringify(coursesSummary, null, 2)}
         "type": "array",
         "items": {
           "type": "object",
+          "additionalProperties": false,
+          "required": ["priority","course_name","recommended_mileage","acceptance_probability","risk_level","min_safe_mileage","reasoning"],
           "properties": {
             "priority": {"type": "integer"},
             "course_name": {"type": "string"},
@@ -1014,34 +1018,33 @@ ${JSON.stringify(coursesSummary, null, 2)}
             "risk_level": {"type": "string", "enum": ["low","medium","high"]},
             "min_safe_mileage": {"type": "integer"},
             "reasoning": {"type": "string"}
-          },
-          "required": ["priority","course_name","recommended_mileage","acceptance_probability","risk_level","min_safe_mileage","reasoning"]
+          }
         }
       },
       "warnings": {"type": "array", "items": {"type": "string"}},
       "alternative_distribution": {
         "type": "object",
+        "additionalProperties": false,
+        "required": ["description","courses"],
         "properties": {
           "description": {"type": "string"},
           "courses": {
             "type": "array",
             "items": {
               "type": "object",
+              "additionalProperties": false,
+              "required": ["priority","course_name","recommended_mileage","reasoning"],
               "properties": {
                 "priority": {"type": "integer"},
                 "course_name": {"type": "string"},
                 "recommended_mileage": {"type": "integer"},
                 "reasoning": {"type": "string"}
-              },
-              "required": ["priority","course_name","recommended_mileage","reasoning"]
+              }
             }
           }
-        },
-        "required": ["description","courses"]
+        }
       }
-    },
-    "required": ["strategy_summary","total_mileage_used","courses","warnings","alternative_distribution"],
-    "additionalProperties": false
+    }
   };
 
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
