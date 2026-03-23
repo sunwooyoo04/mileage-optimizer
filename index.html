@@ -1192,20 +1192,22 @@ function renderTrendAnalysis(courses) {
     const sems = c.semesters;
     if (sems.length < 1) return;
 
-    const stats = sems.map(s => semStats(s));
-    const latest = stats[stats.length - 1];
-    const hasN = stats.some(s => s.nCount > 0);
+    // API는 최신 학기를 먼저 반환 → 역순으로 정렬해 오래된→최신 순으로 표시
+    const semsAsc = [...sems].reverse();
+    const statsAsc = semsAsc.map(s => semStats(s));
+    const latest = statsAsc[statsAsc.length - 1]; // 가장 최신
+    const hasN = statsAsc.some(s => s.nCount > 0);
 
-    // 헤더: 항목 | 학기1 | 학기2 | ...
-    const thCols = sems.map((s, i) => {
-      const isLatest = i === sems.length - 1;
+    // 헤더: 항목 | 학기1(오래된) | ... | 학기N(최신★)
+    const thCols = semsAsc.map((s, i) => {
+      const isLatest = i === semsAsc.length - 1;
       return `<th style="${isLatest ? 'background:#0f2244' : ''}">${s.name}${isLatest ? ' ★' : ''}</th>`;
     }).join('');
 
     const mkRow = (label, fn, bg, colorFn) => {
-      const cells = stats.map((s, i) => {
+      const cells = statsAsc.map((s, i) => {
         const val = fn(s);
-        const prev = i > 0 ? fn(stats[i-1]) : null;
+        const prev = i > 0 ? fn(statsAsc[i-1]) : null;
         const diff = prev !== null ? val - prev : null;
         const color = colorFn && diff !== null ? colorFn(diff) : '';
         const arrow = diff !== null && diff !== 0 ? `<small style="color:${color}">(${diff>0?'+':''}${diff})</small>` : '';
@@ -1233,8 +1235,8 @@ function renderTrendAnalysis(courses) {
 
     // 트렌드 코멘트 (최근 2학기 비교)
     const comment = [];
-    if (sems.length >= 2) {
-      const prev = stats[stats.length - 2];
+    if (semsAsc.length >= 2) {
+      const prev = statsAsc[statsAsc.length - 2];
       const avgChange = latest.yAvg - prev.yAvg;
       const capChange = latest.cap - prev.cap;
       const minChange = latest.yMin - prev.yMin;
@@ -1247,13 +1249,13 @@ function renderTrendAnalysis(courses) {
       if (latest.nMax >= latest.yMin) comment.push(`⚠️ 최근 학기에 ${latest.nMax}점을 넣고도 떨어진 사람이 있습니다. 마일리지 외 조건(이수비율 등)도 당락에 영향을 미칩니다.`);
     }
     // 모든 학기에서 해당 패턴 체크
-    stats.forEach((s, i) => {
-      if (s.nCount > 0 && s.nMax >= s.yMin && i !== stats.length - 1) {
-        comment.push(`⚠️ ${sems[i].name}: ${s.nMax}점 넣고도 불합격한 사람이 있었습니다.`);
+    statsAsc.forEach((s, i) => {
+      if (s.nCount > 0 && s.nMax >= s.yMin && i !== statsAsc.length - 1) {
+        comment.push(`⚠️ ${semsAsc[i].name}: ${s.nMax}점 넣고도 불합격한 사람이 있었습니다.`);
       }
     });
-    const overallTrend = sems.length >= 2
-      ? (latest.yAvg - stats[0].yAvg > 2 ? '📈 전체 경쟁 심화 추세' : latest.yAvg - stats[0].yAvg < -2 ? '📉 전체 경쟁 완화 추세' : '➡️ 전체적으로 안정적')
+    const overallTrend = semsAsc.length >= 2
+      ? (latest.yAvg - statsAsc[0].yAvg > 2 ? '📈 전체 경쟁 심화 추세' : latest.yAvg - statsAsc[0].yAvg < -2 ? '📉 전체 경쟁 완화 추세' : '➡️ 전체적으로 안정적')
       : '';
 
     container.innerHTML += `
@@ -1261,10 +1263,10 @@ function renderTrendAnalysis(courses) {
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
           <strong style="color:var(--navy);font-size:1rem">${c.courseName}</strong>
           <span style="font-size:0.82rem;font-weight:600;color:var(--gray-700)">${overallTrend}</span>
-          <span style="font-size:0.78rem;color:var(--gray-500)">(${sems.length}개 학기 데이터)</span>
+          <span style="font-size:0.78rem;color:var(--gray-500)">(${semsAsc.length}개 학기 데이터)</span>
         </div>
         <div style="overflow-x:auto">
-          <table class="result-table" style="font-size:0.83rem;min-width:${120 + sems.length * 130}px">
+          <table class="result-table" style="font-size:0.83rem;min-width:${120 + semsAsc.length * 130}px">
             <thead><tr><th>항목</th>${thCols}</tr></thead>
             <tbody>${rows}</tbody>
           </table>
