@@ -424,24 +424,28 @@ body {
         </table>
       </div>
     </div>
+    <div class="section" id="trendSection">
+      <div class="section-title"><span class="num">6</span> 학기별 트렌드 분석</div>
+      <div id="trendAnalysis"></div>
+    </div>
     <div class="section" id="aiStrategySection">
-      <div class="section-title"><span class="num">6</span> AI 전략 요약</div>
+      <div class="section-title"><span class="num">7</span> AI 전략 요약</div>
       <div class="ai-box" id="aiSummary"></div>
     </div>
     <div class="section" id="aiCourseSection">
-      <div class="section-title"><span class="num">7</span> 과목별 AI 분석</div>
+      <div class="section-title"><span class="num">8</span> 과목별 AI 분석</div>
       <div class="course-analysis-grid" id="courseAnalysisGrid"></div>
     </div>
     <div class="section" id="warningsSection">
-      <div class="section-title"><span class="num">8</span> 경고 사항</div>
+      <div class="section-title"><span class="num">9</span> 경고 사항</div>
       <ul class="warning-list" id="warningList"></ul>
     </div>
     <div class="section" id="altSection">
-      <div class="section-title"><span class="num">9</span> 보수적 대안 배분</div>
+      <div class="section-title"><span class="num">10</span> 보수적 대안 배분</div>
       <div class="alt-box" id="altBox"></div>
     </div>
     <div class="section">
-      <div class="section-title"><span class="num" id="chartSectionNum">10</span> 확률 시각화</div>
+      <div class="section-title"><span class="num" id="chartSectionNum">11</span> 확률 시각화</div>
       <div class="chart-section" id="chartSection"></div>
     </div>
   </div>
@@ -810,7 +814,11 @@ function calcAcceptanceForMileage(courseData, mileage, isMajor) {
 }
 
 function buildProbabilityCurve(courseData, isMajor) {
-  const maxMlg = Math.min(36, Math.max(...courseData.semesters.map(s => s.summary.maxMlg || 36)));
+  // 실제 Y 합격자들의 최대 마일리지로 계산 (summary.maxMlg 오류 방지)
+  const allYMlg = courseData.semesters.flatMap(s =>
+    s.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y').map(r => r.mlgVal || 0)
+  ).filter(m => m > 0);
+  const maxMlg = allYMlg.length > 0 ? Math.min(36, Math.max(...allYMlg)) : 36;
   const curve = {};
   for (let m = 1; m <= 36; m++) {
     curve[m] = calcAcceptanceForMileage(courseData, m, isMajor);
@@ -1108,7 +1116,7 @@ function renderResults(aiResult) {
     document.getElementById('aiCourseSection').style.display = '';
     document.getElementById('warningsSection').style.display = '';
     document.getElementById('altSection').style.display = '';
-    document.getElementById('chartSectionNum').textContent = '10';
+    document.getElementById('chartSectionNum').textContent = '11';
 
     const grid = document.getElementById('courseAnalysisGrid');
     grid.innerHTML = '';
@@ -1135,11 +1143,79 @@ function renderResults(aiResult) {
     document.getElementById('aiCourseSection').style.display = 'none';
     document.getElementById('warningsSection').style.display = 'none';
     document.getElementById('altSection').style.display = 'none';
-    document.getElementById('chartSectionNum').textContent = '6';
+    document.getElementById('chartSectionNum').textContent = '7';
   }
+
+  // Trend analysis
+  renderTrendAnalysis(courses);
 
   // Charts
   renderCharts(courses);
+}
+
+function renderTrendAnalysis(courses) {
+  const container = document.getElementById('trendAnalysis');
+  container.innerHTML = '';
+
+  courses.forEach(c => {
+    const sems = c.semesters;
+    if (sems.length < 2) {
+      container.innerHTML += `<div class="course-analysis-item" style="margin-bottom:14px">
+        <h4>${c.courseName}</h4>
+        <p>데이터가 1개 학기뿐이라 트렌드 비교가 어렵습니다.</p>
+      </div>`;
+      return;
+    }
+
+    const latest = sems[sems.length - 1];
+    const prev = sems[sems.length - 2];
+    const latestY = latest.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
+    const prevY = prev.ranks.filter(r => r.mlgAppcsPrcesDivNm === 'Y');
+
+    const latestMinMlg = latestY.length ? Math.min(...latestY.map(r => r.mlgVal || 0)) : 0;
+    const prevMinMlg = prevY.length ? Math.min(...prevY.map(r => r.mlgVal || 0)) : 0;
+    const latestMaxMlg = latestY.length ? Math.max(...latestY.map(r => r.mlgVal || 0)) : 0;
+    const prevMaxMlg = prevY.length ? Math.max(...prevY.map(r => r.mlgVal || 0)) : 0;
+    const latestAvgMlg = latestY.length ? Math.round(latestY.reduce((s,r)=>s+(r.mlgVal||0),0)/latestY.length) : 0;
+    const prevAvgMlg = prevY.length ? Math.round(prevY.reduce((s,r)=>s+(r.mlgVal||0),0)/prevY.length) : 0;
+
+    const capChange = latest.summary.atnlcPercpCnt - prev.summary.atnlcPercpCnt;
+    const minChange = latestMinMlg - prevMinMlg;
+    const avgChange = latestAvgMlg - prevAvgMlg;
+
+    const trend = avgChange > 2 ? '📈 경쟁 심화' : avgChange < -2 ? '📉 경쟁 완화' : '➡️ 비슷한 수준';
+    const capTrend = capChange > 0 ? `정원 ${capChange}명 증가` : capChange < 0 ? `정원 ${Math.abs(capChange)}명 감소` : '정원 동일';
+
+    let rows = '';
+    rows += `<tr><td>학기</td><td>${prev.name}</td><td>${latest.name}</td></tr>`;
+    rows += `<tr><td>정원</td><td>${prev.summary.atnlcPercpCnt}명</td><td>${latest.summary.atnlcPercpCnt}명 <small style="color:${capChange>0?'var(--green)':capChange<0?'var(--red)':'var(--gray-500)'}">(${capChange>=0?'+':''}${capChange})</small></td></tr>`;
+    rows += `<tr><td>합격자 수</td><td>${prevY.length}명</td><td>${latestY.length}명</td></tr>`;
+    rows += `<tr><td>최소 마일리지</td><td>${prevMinMlg}점</td><td>${latestMinMlg}점 <small style="color:${minChange>0?'var(--red)':minChange<0?'var(--green)':'var(--gray-500)'}">(${minChange>=0?'+':''}${minChange})</small></td></tr>`;
+    rows += `<tr><td>평균 마일리지</td><td>${prevAvgMlg}점</td><td>${latestAvgMlg}점 <small style="color:${avgChange>0?'var(--red)':avgChange<0?'var(--green)':'var(--gray-500)'}">(${avgChange>=0?'+':''}${avgChange})</small></td></tr>`;
+    rows += `<tr><td>최대 마일리지</td><td>${prevMaxMlg}점</td><td>${latestMaxMlg}점</td></tr>`;
+
+    const comment = [];
+    if (avgChange > 2) comment.push(`평균 마일리지가 ${avgChange}점 올랐습니다. 경쟁이 심해지고 있어 더 높은 마일리지가 필요합니다.`);
+    else if (avgChange < -2) comment.push(`평균 마일리지가 ${Math.abs(avgChange)}점 내렸습니다. 경쟁이 완화되고 있습니다.`);
+    else comment.push('평균 마일리지 변화가 크지 않아 안정적인 편입니다.');
+    if (capChange < 0) comment.push(`정원이 ${Math.abs(capChange)}명 줄어 합격이 더 어려워졌습니다.`);
+    else if (capChange > 0) comment.push(`정원이 ${capChange}명 늘어 합격 기회가 넓어졌습니다.`);
+    if (minChange > 0) comment.push(`최소 합격 마일리지가 ${minChange}점 올라 최소 투입량도 높아지고 있습니다.`);
+
+    container.innerHTML += `
+      <div style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <strong style="color:var(--navy)">${c.courseName}</strong>
+          <span style="font-size:0.82rem;font-weight:600;color:var(--gray-700)">${trend} (${capTrend})</span>
+        </div>
+        <table class="result-table" style="font-size:0.85rem">
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="margin-top:10px;padding:10px 14px;background:var(--accent-light);border-radius:var(--radius-sm);font-size:0.85rem;line-height:1.7">
+          ${comment.join(' ')}
+        </div>
+      </div>`;
+  });
 }
 
 function getRiskLevel(prob) {
