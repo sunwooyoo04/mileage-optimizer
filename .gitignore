@@ -1,0 +1,5 @@
+*.py
+*.js
+*.pdf
+node_modules/
+.vercel/

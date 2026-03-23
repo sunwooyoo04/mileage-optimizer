@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연세대학교 수강신청 마일리지 최적화</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1a3a6b;
+  --navy-light: #2a5298;
+  --navy-dark: #0f2244;
+  --accent: #4a90d9;
+  --accent-light: #e8f2fc;
+  --green: #27ae60;
+  --yellow: #f39c12;
+  --red: #e74c3c;
+  --gray-100: #f8f9fa;
+  --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
+  --gray-500: #adb5bd;
+  --gray-700: #495057;
+  --gray-900: #212529;
+  --white: #ffffff;
+  --shadow: 0 2px 12px rgba(26,58,107,0.10);
+  --shadow-lg: 0 8px 32px rgba(26,58,107,0.15);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+body {
+  font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', '맑은 고딕', sans-serif;
+  background: linear-gradient(135deg, #f0f4fb 0%, #e8f0fc 100%);
+  color: var(--gray-900);
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+.header {
+  background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 60%, var(--navy-light) 100%);
+  color: var(--white);
+  padding: 32px 0 24px;
+  text-align: center;
+  box-shadow: 0 4px 24px rgba(26,58,107,0.25);
+}
+.header h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+.header p { margin-top: 8px; font-size: 0.95rem; opacity: 0.82; }
+.yonsei-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-size: 0.8rem;
+  margin-bottom: 14px;
+  letter-spacing: 0.5px;
+}
+.container { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+.section {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px 32px;
+  margin-top: 24px;
+}
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--accent-light);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title .num {
+  background: var(--navy);
+  color: var(--white);
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+}
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 0.85rem; font-weight: 600; color: var(--gray-700); }
+.form-group input, .form-group select {
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 9px 13px;
+  font-size: 0.92rem;
+  color: var(--gray-900);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: var(--white);
+  width: 100%;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(74,144,217,0.13);
+}
+.toggle-group { display: flex; gap: 0; border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--gray-300); }
+.toggle-group button {
+  flex: 1; padding: 9px; border: none; background: var(--white);
+  font-size: 0.88rem; font-weight: 600; cursor: pointer; color: var(--gray-700);
+  transition: all 0.15s;
+}
+.toggle-group button.active { background: var(--navy); color: var(--white); }
+.course-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+@media (max-width: 680px) { .course-grid { grid-template-columns: 1fr; } }
+.course-card {
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+  background: var(--gray-100);
+}
+.course-card.has-data { border-color: var(--accent); background: var(--accent-light); }
+.course-card-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+}
+.course-card-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--navy); }
+.priority-select {
+  border: 1.5px solid var(--gray-300); border-radius: 6px; padding: 5px 10px;
+  font-size: 0.85rem; font-weight: 600; color: var(--navy); background: var(--white);
+}
+.major-toggle { margin-bottom: 12px; }
+.major-toggle label { font-size: 0.82rem; font-weight: 600; color: var(--gray-700); display: block; margin-bottom: 5px; }
+.drop-zone {
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--white);
+}
+.drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(74,144,217,0.05); }
+.drop-zone .dz-icon { font-size: 1.8rem; margin-bottom: 6px; }
+.drop-zone .dz-text { font-size: 0.82rem; color: var(--gray-500); }
+.drop-zone input[type=file] { display: none; }
+.course-info-badge {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.sample-btn {
+  margin-top: 14px;
+  background: none;
+  border: 1.5px dashed var(--accent);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s;
+  width: 100%;
+}
+.sample-btn:hover { background: var(--accent); color: var(--white); }
+.analyze-btn {
+  display: block; width: 100%;
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  padding: 18px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  transition: all 0.2s;
+  box-shadow: var(--shadow);
+}
+.analyze-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.analyze-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.progress-bar-wrap {
+  margin-top: 16px; background: var(--gray-200); border-radius: 8px; overflow: hidden; display: none;
+}
+.progress-bar { height: 8px; background: linear-gradient(90deg, var(--navy), var(--accent)); width: 0%; transition: width 0.3s; }
+.progress-text { text-align: center; font-size: 0.85rem; color: var(--gray-700); margin-top: 8px; display: none; }
+#results { display: none; }
+.result-table { width: 100%; border-collapse: collapse; margin-top: 4px; font-size: 0.9rem; }
+.result-table th {
+  background: var(--navy); color: var(--white); padding: 11px 14px;
+  text-align: left; font-weight: 600; font-size: 0.82rem;
+}
+.result-table th:first-child { border-radius: 8px 0 0 0; }
+.result-table th:last-child { border-radius: 0 8px 0 0; }
+.result-table td { padding: 11px 14px; border-bottom: 1px solid var(--gray-200); vertical-align: middle; }
+.result-table tr:last-child td { border-bottom: none; }
+.result-table tr:hover td { background: var(--accent-light); }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.77rem; font-weight: 700;
+}
+.badge-low { background: #d4edda; color: #155724; }
+.badge-medium { background: #fff3cd; color: #856404; }
+.badge-high { background: #f8d7da; color: #721c24; }
+.prob-bar-wrap { background: var(--gray-200); border-radius: 4px; height: 8px; width: 100px; display: inline-block; overflow: hidden; }
+.prob-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.ai-box {
+  background: linear-gradient(135deg, var(--accent-light) 0%, #f0f7ff 100%);
+  border: 1px solid rgba(74,144,217,0.25);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-top: 8px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--gray-900);
+}
+.course-analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 8px; }
+.course-analysis-item {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.course-analysis-item h4 { font-size: 0.88rem; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+.course-analysis-item p { font-size: 0.83rem; line-height: 1.65; color: var(--gray-700); }
+.warning-list { list-style: none; margin-top: 8px; }
+.warning-list li {
+  padding: 10px 14px;
+  background: #fff8e1;
+  border-left: 4px solid var(--yellow);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.87rem;
+  margin-bottom: 8px;
+  color: #5a3e00;
+}
+.alt-box {
+  background: #f8fff8;
+  border: 1px solid #c3e6cb;
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-top: 8px;
+}
+.alt-box p { font-size: 0.88rem; color: var(--gray-700); margin-bottom: 12px; }
+.alt-course-list { display: flex; flex-wrap: wrap; gap: 10px; }
+.alt-course-pill {
+  background: var(--white);
+  border: 1px solid var(--green);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 0.83rem;
+  color: var(--green);
+  font-weight: 600;
+}
+.chart-section { margin-top: 8px; }
+.chart-course { margin-bottom: 24px; }
+.chart-course h4 { font-size: 0.88rem; font-weight: 700; color: var(--navy); margin-bottom: 10px; }
+.chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 90px; }
+.chart-bar-wrap { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+.chart-bar {
+  width: 100%; border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  position: relative;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.chart-bar:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 105%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--navy-dark);
+  color: var(--white);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+.chart-bar-label { font-size: 0.62rem; color: var(--gray-500); margin-top: 3px; }
+.chart-legend { display: flex; gap: 14px; margin-top: 8px; font-size: 0.78rem; color: var(--gray-700); align-items: center; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.toast {
+  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: var(--navy-dark); color: var(--white);
+  padding: 12px 24px; border-radius: 30px; font-size: 0.88rem;
+  box-shadow: var(--shadow-lg); transition: transform 0.3s; z-index: 999;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.mileage-budget-row { display: flex; align-items: center; gap: 14px; margin-top: 16px; flex-wrap: wrap; }
+.mileage-budget-row label { font-size: 0.85rem; font-weight: 600; color: var(--gray-700); white-space: nowrap; }
+.mileage-budget-row input { width: 100px; border: 1.5px solid var(--gray-300); border-radius: 6px; padding: 8px 12px; font-size: 0.92rem; }
+.api-key-row { display: flex; gap: 12px; align-items: flex-end; }
+.api-key-row .form-group { flex: 1; }
+.api-key-row button {
+  padding: 9px 18px; background: var(--navy); color: var(--white);
+  border: none; border-radius: var(--radius-sm); font-size: 0.88rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s; height: 40px;
+}
+.api-key-row button:hover { background: var(--navy-light); }
+.skip-ai-label { font-size: 0.82rem; color: var(--gray-500); margin-top: 10px; }
+.skip-ai-label input { margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <div class="yonsei-badge">연세대학교 수강신청 도우미</div>
+    <h1>마일리지 최적화 분석기</h1>
+    <p>과거 데이터 분석 + AI 전략으로 최적의 마일리지 배분을 찾아드립니다</p>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Section 1: API 설정 -->
+  <div class="section">
+    <div class="section-title"><span class="num">1</span> API 설정</div>
+    <div class="api-key-row">
+      <div class="form-group">
+        <label>OpenRouter API Key</label>
+        <input type="password" id="apiKey" placeholder="sk-or-v1-..." />
+      </div>
+      <button onclick="saveApiKey()">저장</button>
+    </div>
+    <div style="margin-top:10px;">
+      <label class="skip-ai-label">
+        <input type="checkbox" id="skipAI"> AI 분석 없이 통계 결과만 보기 (API 키 없이 사용)
+      </label>
+    </div>
+    <p style="font-size:0.8rem;color:var(--gray-500);margin-top:8px;">
+      API 키는 브라우저 localStorage에만 저장되며 외부로 전송되지 않습니다.
+      <a href="https://openrouter.ai" target="_blank" style="color:var(--accent);">OpenRouter</a>에서 무료로 발급 가능합니다.
+    </p>
+  </div>
+
+  <!-- Section 2: 내 정보 -->
+  <div class="section">
+    <div class="section-title"><span class="num">2</span> 내 정보</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>학년</label>
+        <select id="grade">
+          <option value="1">1학년</option>
+          <option value="2">2학년</option>
+          <option value="3" selected>3학년</option>
+          <option value="4">4학년</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>특수교육대상자 여부</label>
+        <div class="toggle-group">
+          <button id="dsstd-n" class="active" onclick="setToggle('dsstd','N')">해당 없음</button>
+          <button id="dsstd-y" onclick="setToggle('dsstd','Y')">해당</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>졸업신청 여부</label>
+        <div class="toggle-group">
+          <button id="grdt-n" class="active" onclick="setToggle('grdt','N')">해당 없음</button>
+          <button id="grdt-y" onclick="setToggle('grdt','Y')">졸업예정</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:14px;">
+      <div class="form-group">
+        <label>총 이수비율 (ttCmpsjCdtRto)</label>
+        <input type="number" id="ttRatio" value="0.75" min="0" max="1" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>직전학기 이수비율 (jstbfSmtCmpsjCdtRto)</label>
+        <input type="number" id="jstbfRatio" value="1.0" min="0" max="1" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label>총 신청 과목수 (aplySubjcCnt)</label>
+        <input type="number" id="applyCnt" value="6" min="1" max="20" step="1" />
+      </div>
+    </div>
+    <div class="mileage-budget-row">
+      <label>총 보유 마일리지</label>
+      <input type="number" id="totalBudget" value="72" min="1" max="300" step="1" />
+      <span style="font-size:0.85rem;color:var(--gray-500);">점 (6개 과목에 배분)</span>
+    </div>
+  </div>
+
+  <!-- Section 3: 과목 설정 -->
+  <div class="section">
+    <div class="section-title"><span class="num">3</span> 과목 설정 (최대 6개)</div>
+    <div style="margin-bottom:14px;">
+      <button class="sample-btn" style="width:auto;padding:8px 20px;" onclick="loadSampleData()">📂 샘플 데이터 불러오기 (테스트용)</button>
+    </div>
+    <div class="course-grid" id="courseGrid">
+      <!-- Rendered by JS -->
+    </div>
+  </div>
+
+  <!-- Section 4: 분석 시작 -->
+  <div class="section">
+    <div class="section-title"><span class="num">4</span> 분석 시작</div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="startAnalysis()">🔍 최적화 분석 시작</button>
+    <div class="progress-bar-wrap" id="progressWrap">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <!-- Section 5: 결과 -->
+  <div id="results">
+    <div class="section">
+      <div class="section-title"><span class="num">5</span> 최적 마일리지 배분 결과</div>
+      <div style="overflow-x:auto;">
+        <table class="result-table" id="resultTable">
+          <thead>
+            <tr>
+              <th>우선순위</th>
+              <th>과목명</th>
+              <th>추천 마일리지</th>
+              <th>합격확률</th>
+              <th>리스크</th>
+              <th>최소 안전 마일리지</th>
+            </tr>
+          </thead>
+          <tbody id="resultTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="section" id="aiStrategySection">
+      <div class="section-title"><span class="num">6</span> AI 전략 요약</div>
+      <div class="ai-box" id="aiSummary"></div>
+    </div>
+    <div class="section" id="aiCourseSection">
+      <div class="section-title"><span class="num">7</span> 과목별 AI 분석</div>
+      <div class="course-analysis-grid" id="courseAnalysisGrid"></div>
+    </div>
+    <div class="section" id="warningsSection">
+      <div class="section-title"><span class="num">8</span> 경고 사항</div>
+      <ul class="warning-list" id="warningList"></ul>
+    </div>
+    <div class="section" id="altSection">
+      <div class="section-title"><span class="num">9</span> 보수적 대안 배분</div>
+      <div class="alt-box" id="altBox"></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><span class="num" id="chartSectionNum">10</span> 확률 시각화</div>
+      <div class="chart-section" id="chartSection"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== STATE ====================
+const state = {
+  courses: Array.from({length:6}, (_,i) => ({
+    id: i,
+    priority: i+1,
+    isMajor: 'N',
+    data: null,
+    filename: ''
+  })),
+  userProfile: {},
+  toggles: { dsstd: 'N', grdt: 'N' }
+};
+
+// ==================== INIT ====================
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('openrouter_api_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+  renderCourseGrid();
+});
+
+function saveApiKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (key) { localStorage.setItem('openrouter_api_key', key); showToast('API 키가 저장되었습니다.'); }
+  else { showToast('API 키를 입력해주세요.'); }
+}
+
+function setToggle(type, val) {
+  state.toggles[type] = val;
+  if (type === 'dsstd') {
+    document.getElementById('dsstd-y').classList.toggle('active', val==='Y');
+    document.getElementById('dsstd-n').classList.toggle('active', val==='N');
+  } else {
+    document.getElementById('grdt-y').classList.toggle('active', val==='Y');
+    document.getElementById('grdt-n').classList.toggle('active', val==='N');
+  }
+}
+
+// ==================== COURSE GRID ====================
+function renderCourseGrid() {
+  const grid = document.getElementById('courseGrid');
+  grid.innerHTML = '';
+  state.courses.forEach((c, i) => {
+    const div = document.createElement('div');
+    div.className = 'course-card' + (c.data ? ' has-data' : '');
+    div.id = 'course-card-' + i;
+    div.innerHTML = `
+      <div class="course-card-header">
+        <h3>과목 ${i+1}</h3>
+        <select class="priority-select" onchange="setPriority(${i}, this.value)" title="우선순위">
+          ${[1,2,3,4,5,6].map(n=>`<option value="${n}" ${c.priority==n?'selected':''}>${n}순위</option>`).join('')}
+        </select>
+      </div>
+      <div class="major-toggle">
+        <label>전공자 여부</label>
+        <div class="toggle-group">
+          <button id="maj-n-${i}" class="${c.isMajor==='N'?'active':''}" onclick="setMajor(${i},'N')">비전공</button>
+          <button id="maj-y-${i}" class="${c.isMajor==='Y'?'active':''}" onclick="setMajor(${i},'Y')">전공</button>
+        </div>
+      </div>
+      <div class="drop-zone" id="dz-${i}" onclick="document.getElementById('file-${i}').click()"
+        ondragover="dzDragOver(event,${i})" ondragleave="dzDragLeave(${i})" ondrop="dzDrop(event,${i})">
+        <div class="dz-icon">📄</div>
+        <div class="dz-text">${c.data ? c.filename : 'JSON 파일을 드래그하거나 클릭하여 업로드'}</div>
+        <input type="file" id="file-${i}" accept=".json" onchange="loadFile(${i}, this)">
+      </div>
+      ${c.data ? `<div class="course-info-badge">
+        <strong>${c.data.course_info.subjtNm}</strong> (${c.data.course_info.subjtNb})<br>
+        교수: ${c.data.course_info.cgprfNm} | 학점: ${c.data.course_info.cdt}<br>
+        데이터: ${c.data.semesters.length}개 학기
+      </div>` : ''}
+    `;
+    grid.appendChild(div);
+  });
+}
+
+function setPriority(idx, val) {
+  state.courses[idx].priority = parseInt(val);
+}
+function setMajor(idx, val) {
+  state.courses[idx].isMajor = val;
+  document.getElementById('maj-y-'+idx).classList.toggle('active', val==='Y');
+  document.getElementById('maj-n-'+idx).classList.toggle('active', val==='N');
+}
+function dzDragOver(e,i) { e.preventDefault(); document.getElementById('dz-'+i).classList.add('drag-over'); }
+function dzDragLeave(i) { document.getElementById('dz-'+i).classList.remove('drag-over'); }
+function dzDrop(e,i) { e.preventDefault(); dzDragLeave(i); const f=e.dataTransfer.files[0]; if(f) parseJsonFile(i,f); }
+function loadFile(i, input) { if(input.files[0]) parseJsonFile(i, input.files[0]); }
+function parseJsonFile(i, file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      state.courses[i].data = data;
+      state.courses[i].filename = file.name;
+      renderCourseGrid();
+      showToast(`과목 ${i+1} 데이터 로드 완료: ${data.course_info.subjtNm}`);
+    } catch(err) { showToast('JSON 파싱 오류: ' + err.message); }
+  };
+  reader.readAsText(file);
+}
+
+// ==================== SAMPLE DATA ====================
+function loadSampleData() {
+  const sample1 = {
+    "course_info": {"subjtNb":"HUM2038","subjtNm":"현대사회와 철학","corseDvclsNo":"01","cgprfNm":"김철수","cdt":"3"},
+    "semesters": [
+      {"name":"2024년 1학기","summary":{"atnlcPercpCnt":30,"cnt":48,"minMlg":10,"avgMlg":20,"maxMlg":36,"mjrprPercpCnt":"8(Y)"},
+       "ranks":[
+        {"mlgVal":36,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.9,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":34,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.95,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":30,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.7,"jstbfSmtCmpsjCdtRto":0.85,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":28,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.8,"jstbfSmtCmpsjCdtRto":0.9,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":25,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.75,"jstbfSmtCmpsjCdtRto":0.95,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.65,"jstbfSmtCmpsjCdtRto":0.8,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.2,"jstbfSmtCmpsjCdtRto":0.5,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":18,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.72,"jstbfSmtCmpsjCdtRto":0.88,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":15,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.6,"jstbfSmtCmpsjCdtRto":0.75,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":14,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":3,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.4,"jstbfSmtCmpsjCdtRto":0.6,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":12,"hy":"4","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.85,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":10,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.55,"jstbfSmtCmpsjCdtRto":0.7,"mlgAppcsPrcesDivNm":"N"}
+       ]},
+      {"name":"2023년 2학기","summary":{"atnlcPercpCnt":28,"cnt":42,"minMlg":8,"avgMlg":18,"maxMlg":34,"mjrprPercpCnt":"7(Y)"},
+       "ranks":[
+        {"mlgVal":34,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.98,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":30,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.88,"jstbfSmtCmpsjCdtRto":0.95,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":26,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.68,"jstbfSmtCmpsjCdtRto":0.82,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":24,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.78,"jstbfSmtCmpsjCdtRto":0.92,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.75,"jstbfSmtCmpsjCdtRto":0.9,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.62,"jstbfSmtCmpsjCdtRto":0.78,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":18,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.22,"jstbfSmtCmpsjCdtRto":0.48,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":16,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.7,"jstbfSmtCmpsjCdtRto":0.85,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":14,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.58,"jstbfSmtCmpsjCdtRto":0.72,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":12,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":3,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.38,"jstbfSmtCmpsjCdtRto":0.58,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":10,"hy":"4","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.82,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":8,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.52,"jstbfSmtCmpsjCdtRto":0.68,"mlgAppcsPrcesDivNm":"N"}
+       ]},
+      {"name":"2023년 1학기","summary":{"atnlcPercpCnt":32,"cnt":50,"minMlg":12,"avgMlg":22,"maxMlg":36,"mjrprPercpCnt":"9(Y)"},
+       "ranks":[
+        {"mlgVal":36,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":1.0,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":33,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.92,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":29,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.72,"jstbfSmtCmpsjCdtRto":0.88,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":27,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.82,"jstbfSmtCmpsjCdtRto":0.94,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":24,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.78,"jstbfSmtCmpsjCdtRto":0.96,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.66,"jstbfSmtCmpsjCdtRto":0.82,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"4","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.88,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":19,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.74,"jstbfSmtCmpsjCdtRto":0.9,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":17,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.64,"jstbfSmtCmpsjCdtRto":0.78,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":14,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":3,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.35,"jstbfSmtCmpsjCdtRto":0.55,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":12,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.56,"jstbfSmtCmpsjCdtRto":0.7,"mlgAppcsPrcesDivNm":"N"}
+       ]}
+    ]
+  };
+  const sample2 = {
+    "course_info": {"subjtNb":"ENG3045","subjtNm":"영문학의 이해","corseDvclsNo":"02","cgprfNm":"박영희","cdt":"3"},
+    "semesters": [
+      {"name":"2024년 1학기","summary":{"atnlcPercpCnt":25,"cnt":40,"minMlg":8,"avgMlg":16,"maxMlg":32,"mjrprPercpCnt":"12(Y)"},
+       "ranks":[
+        {"mlgVal":32,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":1.0,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":28,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.85,"jstbfSmtCmpsjCdtRto":0.95,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":25,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.7,"jstbfSmtCmpsjCdtRto":0.85,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.95,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.8,"jstbfSmtCmpsjCdtRto":0.92,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":18,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.65,"jstbfSmtCmpsjCdtRto":0.8,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":16,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.75,"jstbfSmtCmpsjCdtRto":0.88,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":14,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.6,"jstbfSmtCmpsjCdtRto":0.75,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":13,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.25,"jstbfSmtCmpsjCdtRto":0.5,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":12,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.7,"jstbfSmtCmpsjCdtRto":0.86,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":10,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.55,"jstbfSmtCmpsjCdtRto":0.7,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":8,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":3,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.3,"jstbfSmtCmpsjCdtRto":0.5,"mlgAppcsPrcesDivNm":"N"}
+       ]},
+      {"name":"2023년 2학기","summary":{"atnlcPercpCnt":22,"cnt":36,"minMlg":6,"avgMlg":14,"maxMlg":30,"mjrprPercpCnt":"10(Y)"},
+       "ranks":[
+        {"mlgVal":30,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.98,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":26,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.82,"jstbfSmtCmpsjCdtRto":0.93,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.68,"jstbfSmtCmpsjCdtRto":0.82,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.78,"jstbfSmtCmpsjCdtRto":0.9,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":18,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.92,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":16,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.62,"jstbfSmtCmpsjCdtRto":0.78,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":14,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.72,"jstbfSmtCmpsjCdtRto":0.86,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":12,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.58,"jstbfSmtCmpsjCdtRto":0.72,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":10,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.22,"jstbfSmtCmpsjCdtRto":0.46,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":8,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.5,"jstbfSmtCmpsjCdtRto":0.65,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":6,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":3,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.28,"jstbfSmtCmpsjCdtRto":0.48,"mlgAppcsPrcesDivNm":"N"}
+       ]},
+      {"name":"2023년 1학기","summary":{"atnlcPercpCnt":27,"cnt":44,"minMlg":10,"avgMlg":18,"maxMlg":34,"mjrprPercpCnt":"11(Y)"},
+       "ranks":[
+        {"mlgVal":34,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":1.0,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":30,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.88,"jstbfSmtCmpsjCdtRto":0.96,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":26,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.72,"jstbfSmtCmpsjCdtRto":0.86,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":24,"hy":"4","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"Y","fratlcYn":"N","ttCmpsjCdtRto":0.96,"jstbfSmtCmpsjCdtRto":1.0,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":22,"hy":"3","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.84,"jstbfSmtCmpsjCdtRto":0.94,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":20,"hy":"2","mjsbjYn":"Y","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.68,"jstbfSmtCmpsjCdtRto":0.82,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":18,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.76,"jstbfSmtCmpsjCdtRto":0.9,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":16,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.62,"jstbfSmtCmpsjCdtRto":0.76,"mlgAppcsPrcesDivNm":"Y"},
+        {"mlgVal":14,"hy":"1","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":4,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.28,"jstbfSmtCmpsjCdtRto":0.52,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":12,"hy":"3","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":6,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.68,"jstbfSmtCmpsjCdtRto":0.84,"mlgAppcsPrcesDivNm":"N"},
+        {"mlgVal":10,"hy":"2","mjsbjYn":"N","dsstdYn":"N","aplySubjcCnt":5,"grdtnAplyYn":"N","fratlcYn":"N","ttCmpsjCdtRto":0.52,"jstbfSmtCmpsjCdtRto":0.66,"mlgAppcsPrcesDivNm":"N"}
+       ]}
+    ]
+  };
+  state.courses[0].data = sample1; state.courses[0].filename = 'sample_HUM2038.json'; state.courses[0].priority = 1;
+  state.courses[1].data = sample2; state.courses[1].filename = 'sample_ENG3045.json'; state.courses[1].priority = 2;
+  renderCourseGrid();
+  showToast('샘플 데이터가 로드되었습니다. (과목 1, 2)');
+}
+
+// ==================== PRIORITY KEY ====================
+function priorityKey(r) {
+  const flag = v => (v === 'Y') ? 0 : 1;
+  const mlg = -(r.mlgVal || 0);
+  const dsstd = flag(r.dsstdYn);
+  const major = flag((r.mjsbjYn || 'N')[0]);
+  const applyCnt = -Math.min(r.aplySubjcCnt || 0, 6);
+  const grdt = flag(r.grdtnAplyYn);
+  const fratlc = flag(r.fratlcYn);
+  const ttRatio = -Math.min(r.ttCmpsjCdtRto || 0, 1.0);
+  const jstbf = -Math.min(r.jstbfSmtCmpsjCdtRto || 0, 1.0);
+  return [mlg, dsstd, major, applyCnt, grdt, fratlc, ttRatio, jstbf];
+}
+
+function compareKeys(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] < b[i]) return -1;
+    if (a[i] > b[i]) return 1;
+  }
+  return 0;
+}
+
+// ==================== STATISTICS ====================
+function getUserProfile() {
+  return {
+    mlgVal: 0,
+    hy: document.getElementById('grade').value,
+    mjsbjYn: 'N',
+    dsstdYn: state.toggles.dsstd,
+    aplySubjcCnt: parseInt(document.getElementById('applyCnt').value) || 6,
+    grdtnAplyYn: state.toggles.grdt,
+    fratlcYn: 'N',
+    ttCmpsjCdtRto: parseFloat(document.getElementById('ttRatio').value) || 0.75,
+    jstbfSmtCmpsjCdtRto: parseFloat(document.getElementById('jstbfRatio').value) || 1.0,
+    mlgAppcsPrcesDivNm: '?'
+  };
+}
+
+function parseMajorQuota(mjrprPercpCnt) {
+  if (!mjrprPercpCnt) return null;
+  const m = String(mjrprPercpCnt).match(/(\d+)\(Y\)/);
+  return m ? parseInt(m[1]) : null;
+}
+
+function calcAcceptanceForMileage(courseData, mileage, isMajor) {
+  const profile = getUserProfile();
+  profile.mlgVal = mileage;
+  profile.mjsbjYn = isMajor;
+
+  const semesters = courseData.semesters;
+  let admitted = 0;
+
+  for (const sem of semesters) {
+    const pool = [...sem.ranks];
+    pool.push({...profile});
+    pool.sort((a,b) => compareKeys(priorityKey(a), priorityKey(b)));
+
+    const capacity = sem.summary.atnlcPercpCnt;
+    const majorQuota = parseMajorQuota(sem.summary.mjrprPercpCnt);
+    const userIdx = pool.indexOf(profile);
+
+    if (majorQuota && majorQuota > 0) {
+      if (isMajor === 'Y') {
+        const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
+        const userMajorIdx = majorPool.indexOf(profile);
+        if (userMajorIdx !== -1 && userMajorIdx < majorQuota) admitted++;
+      } else {
+        const majorPool = pool.filter(r => (r.mjsbjYn||'N')[0] === 'Y');
+        const actualMajorAdmitted = Math.min(majorPool.length, majorQuota);
+        const genCapacity = capacity - actualMajorAdmitted;
+        const genPool = pool.filter(r => (r.mjsbjYn||'N')[0] !== 'Y');
+        const userGenIdx = genPool.indexOf(profile);
+        if (userGenIdx !== -1 && userGenIdx < genCapacity) admitted++;
+      }
+    } else {
+      if (userIdx !== -1 && userIdx < capacity) admitted++;
+    }
+  }
+  return admitted / semesters.length;
+}
+
+function buildProbabilityCurve(courseData, isMajor) {
+  const maxMlg = Math.min(36, Math.max(...courseData.semesters.map(s => s.summary.maxMlg || 36)));
+  const curve = {};
+  for (let m = 1; m <= 36; m++) {
+    curve[m] = calcAcceptanceForMileage(courseData, m, isMajor);
+  }
+  return {curve, maxMlg};
+}
+
+// ==================== OPTIMIZATION ====================
+function optimize(courses, budget) {
+  // courses: [{priority, curve, maxMlg, ...}]
+  // weight: priority 1 = 6, ..., priority 6 = 1
+  const n = courses.length;
+  if (n === 0) return [];
+
+  const weights = courses.map(c => 7 - c.priority);
+  const maxPerCourse = courses.map(c => c.maxMlg);
+
+  // Greedy + local search approach
+  let alloc = courses.map(() => 1);
+  let remaining = budget - n;
+
+  // Score function
+  const score = (alloc) => alloc.reduce((sum, m, i) => sum + weights[i] * (courses[i].curve[m] || 0), 0);
+
+  // Greedy: add 1 mileage to the course with the highest marginal gain
+  while (remaining > 0) {
+    let bestGain = -Infinity, bestIdx = -1;
+    for (let i = 0; i < n; i++) {
+      if (alloc[i] >= maxPerCourse[i]) continue;
+      const gain = weights[i] * ((courses[i].curve[alloc[i]+1] || 0) - (courses[i].curve[alloc[i]] || 0));
+      if (gain > bestGain) { bestGain = gain; bestIdx = i; }
+    }
+    if (bestIdx === -1) break;
+    alloc[bestIdx]++;
+    remaining--;
+  }
+
+  return alloc;
+}
+
+function findMinSafeMileage(curve, threshold=0.5) {
+  for (let m = 1; m <= 36; m++) {
+    if ((curve[m] || 0) >= threshold) return m;
+  }
+  return 36;
+}
+
+// ==================== ANALYSIS ====================
+let analysisResults = null;
+
+async function startAnalysis() {
+  const activeCourses = state.courses.filter(c => c.data !== null);
+  if (activeCourses.length === 0) { showToast('최소 1개 과목의 JSON 파일을 업로드하세요.'); return; }
+
+  const budget = parseInt(document.getElementById('totalBudget').value) || 72;
+  const skipAI = document.getElementById('skipAI').checked;
+  const apiKey = document.getElementById('apiKey').value.trim() || localStorage.getItem('openrouter_api_key') || '';
+
+  if (!skipAI && !apiKey) { showToast('API 키를 입력하거나 "AI 분석 없이" 체크박스를 선택하세요.'); return; }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  setProgress(true, 0, '데이터 분석 중...');
+
+  await sleep(50);
+
+  // Build probability curves
+  const courseResults = [];
+  for (let i = 0; i < activeCourses.length; i++) {
+    const c = activeCourses[i];
+    setProgress(true, (i+1)/activeCourses.length * 40, `${c.data.course_info.subjtNm} 분석 중...`);
+    await sleep(10);
+    const {curve, maxMlg} = buildProbabilityCurve(c.data, c.isMajor);
+    courseResults.push({
+      priority: c.priority,
+      isMajor: c.isMajor,
+      courseName: c.data.course_info.subjtNm,
+      subjtNb: c.data.course_info.subjtNb,
+      professor: c.data.course_info.cgprfNm,
+      curve, maxMlg,
+      semesters: c.data.semesters,
+      summary: c.data.semesters.map(s => s.summary)
+    });
+  }
+
+  // Sort by priority
+  courseResults.sort((a,b) => a.priority - b.priority);
+
+  setProgress(true, 45, '최적 배분 계산 중...');
+  await sleep(10);
+
+  const alloc = optimize(courseResults, budget);
+  courseResults.forEach((c, i) => { c.recommendedMileage = alloc[i]; c.acceptanceProb = c.curve[alloc[i]] || 0; c.minSafe = findMinSafeMileage(c.curve); });
+
+  analysisResults = courseResults;
+
+  if (skipAI) {
+    setProgress(true, 100, '완료!');
+    renderResults(null);
+    btn.disabled = false;
+    setProgress(false, 0, '');
+    showResults();
+    return;
+  }
+
+  setProgress(true, 50, 'AI에게 전략 요청 중...');
+  await sleep(50);
+
+  try {
+    const aiResult = await callOpenRouter(apiKey, courseResults, budget);
+    setProgress(true, 100, '완료!');
+    renderResults(aiResult);
+  } catch(err) {
+    showToast('AI 호출 실패: ' + err.message + ' — 통계 결과만 표시합니다.');
+    renderResults(null);
+  }
+
+  btn.disabled = false;
+  setProgress(false, 0, '');
+  showResults();
+}
+
+// ==================== OPENROUTER ====================
+async function callOpenRouter(apiKey, courseResults, budget) {
+  const profile = {
+    grade: document.getElementById('grade').value,
+    dsstd: state.toggles.dsstd,
+    grdt: state.toggles.grdt,
+    ttRatio: document.getElementById('ttRatio').value,
+    jstbfRatio: document.getElementById('jstbfRatio').value,
+    applyCnt: document.getElementById('applyCnt').value,
+    budget
+  };
+
+  const coursesSummary = courseResults.map(c => ({
+    priority: c.priority,
+    courseName: c.courseName,
+    subjtNb: c.subjtNb,
+    isMajor: c.isMajor,
+    recommendedMileage: c.recommendedMileage,
+    acceptanceProb: Math.round(c.acceptanceProb * 100),
+    minSafe: c.minSafe,
+    maxMlg: c.maxMlg,
+    historicalSemesters: c.semesters.length,
+    historicalAvgMlg: Math.round(c.summary.reduce((s,x)=>s+(x.avgMlg||0),0)/c.summary.length),
+    historicalMaxMlg: Math.max(...c.summary.map(x=>x.maxMlg||0)),
+    probAt10: Math.round((c.curve[10]||0)*100),
+    probAt15: Math.round((c.curve[15]||0)*100),
+    probAt20: Math.round((c.curve[20]||0)*100),
+    probAt25: Math.round((c.curve[25]||0)*100),
+    probAt30: Math.round((c.curve[30]||0)*100)
+  }));
+
+  const prompt = `당신은 연세대학교 수강신청 마일리지 전략 전문가입니다.
+
+아래는 학생의 프로필과 6개 과목의 통계 분석 결과입니다.
+각 과목의 합격확률은 과거 수강신청 데이터를 기반으로 시뮬레이션한 결과입니다.
+
+## 학생 프로필
+- 학년: ${profile.grade}학년
+- 특수교육대상자: ${profile.dsstd === 'Y' ? '예' : '아니오'}
+- 졸업신청: ${profile.grdt === 'Y' ? '예' : '아니오'}
+- 총 이수비율: ${profile.ttRatio}
+- 직전학기 이수비율: ${profile.jstbfRatio}
+- 총 신청 과목수: ${profile.applyCnt}
+- 총 마일리지 예산: ${profile.budget}점
+
+## 과목별 통계 분석 결과
+${JSON.stringify(coursesSummary, null, 2)}
+
+## 요청사항
+1. 위 통계 기반 최적 배분을 검토하고 필요시 조정하세요
+2. 각 과목별로 한국어로 상세한 reasoning을 작성하세요 (왜 이 마일리지를 추천하는지, 리스크는 무엇인지)
+3. risk_level은 합격확률 70% 이상=low, 40~70%=medium, 40% 미만=high
+4. min_safe_mileage는 합격확률 50% 이상이 되는 최소 마일리지
+5. 보수적 대안 배분도 제시하세요 (안정적인 과목에 더 집중)
+6. 주의사항(warnings)을 한국어로 작성하세요`;
+
+  const schema = {
+    "type": "object",
+    "properties": {
+      "strategy_summary": {"type": "string"},
+      "total_mileage_used": {"type": "integer"},
+      "courses": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "priority": {"type": "integer"},
+            "course_name": {"type": "string"},
+            "recommended_mileage": {"type": "integer"},
+            "acceptance_probability": {"type": "number"},
+            "risk_level": {"type": "string", "enum": ["low","medium","high"]},
+            "min_safe_mileage": {"type": "integer"},
+            "reasoning": {"type": "string"}
+          },
+          "required": ["priority","course_name","recommended_mileage","acceptance_probability","risk_level","min_safe_mileage","reasoning"]
+        }
+      },
+      "warnings": {"type": "array", "items": {"type": "string"}},
+      "alternative_distribution": {
+        "type": "object",
+        "properties": {
+          "description": {"type": "string"},
+          "courses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "priority": {"type": "integer"},
+                "course_name": {"type": "string"},
+                "recommended_mileage": {"type": "integer"},
+                "reasoning": {"type": "string"}
+              },
+              "required": ["priority","course_name","recommended_mileage","reasoning"]
+            }
+          }
+        },
+        "required": ["description","courses"]
+      }
+    },
+    "required": ["strategy_summary","total_mileage_used","courses","warnings","alternative_distribution"],
+    "additionalProperties": false
+  };
+
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+      'HTTP-Referer': window.location.href,
+      'X-Title': '연세대 마일리지 최적화'
+    },
+    body: JSON.stringify({
+      model: 'openai/gpt-4o-mini',
+      messages: [{role: 'user', content: prompt}],
+      response_format: {
+        type: 'json_schema',
+        json_schema: { name: 'mileage_strategy', strict: true, schema }
+      }
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`HTTP ${resp.status}: ${err.slice(0,200)}`);
+  }
+
+  const data = await resp.json();
+  const content = data.choices[0].message.content;
+  return JSON.parse(content);
+}
+
+// ==================== RENDER RESULTS ====================
+function renderResults(aiResult) {
+  const tbody = document.getElementById('resultTableBody');
+  tbody.innerHTML = '';
+
+  const courses = analysisResults;
+  const showAI = aiResult && aiResult.courses;
+
+  courses.forEach((c, i) => {
+    const aiCourse = showAI ? aiResult.courses.find(x => x.priority === c.priority) : null;
+    const mileage = aiCourse ? aiCourse.recommended_mileage : c.recommendedMileage;
+    const prob = aiCourse ? aiCourse.acceptance_probability : c.acceptanceProb;
+    const risk = aiCourse ? aiCourse.risk_level : getRiskLevel(c.acceptanceProb);
+    const minSafe = aiCourse ? aiCourse.min_safe_mileage : c.minSafe;
+
+    const probPct = Math.round((prob > 1 ? prob/100 : prob) * 100);
+    const probVal = prob > 1 ? prob/100 : prob;
+    const barColor = probVal >= 0.7 ? 'var(--green)' : probVal >= 0.4 ? 'var(--yellow)' : 'var(--red)';
+
+    tbody.innerHTML += `<tr>
+      <td><strong>${c.priority}순위</strong></td>
+      <td>
+        <div style="font-weight:600">${c.courseName}</div>
+        <div style="font-size:0.78rem;color:var(--gray-500)">${c.subjtNb} | ${c.professor}</div>
+      </td>
+      <td><strong style="font-size:1.1rem;color:var(--navy)">${mileage}</strong>점</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="prob-bar-wrap"><div class="prob-bar-fill" style="width:${probPct}%;background:${barColor}"></div></div>
+          <strong style="color:${barColor}">${probPct}%</strong>
+        </div>
+      </td>
+      <td><span class="badge badge-${risk}">${risk === 'low' ? '낮음' : risk === 'medium' ? '중간' : '높음'}</span></td>
+      <td>${minSafe}점</td>
+    </tr>`;
+  });
+
+  // AI sections
+  if (showAI) {
+    document.getElementById('aiSummary').textContent = aiResult.strategy_summary;
+    document.getElementById('aiStrategySection').style.display = '';
+    document.getElementById('aiCourseSection').style.display = '';
+    document.getElementById('warningsSection').style.display = '';
+    document.getElementById('altSection').style.display = '';
+    document.getElementById('chartSectionNum').textContent = '10';
+
+    const grid = document.getElementById('courseAnalysisGrid');
+    grid.innerHTML = '';
+    aiResult.courses.forEach(c => {
+      grid.innerHTML += `<div class="course-analysis-item">
+        <h4>${c.priority}순위 | ${c.course_name}</h4>
+        <p>${c.reasoning}</p>
+      </div>`;
+    });
+
+    const warnList = document.getElementById('warningList');
+    warnList.innerHTML = (aiResult.warnings || []).map(w => `<li>${w}</li>`).join('') || '<li>특별한 경고 사항이 없습니다.</li>';
+
+    const altBox = document.getElementById('altBox');
+    const alt = aiResult.alternative_distribution;
+    altBox.innerHTML = `<p>${alt.description}</p><div class="alt-course-list">${(alt.courses||[]).map(c=>`<div class="alt-course-pill">${c.priority}순위: ${c.course_name} → ${c.recommended_mileage}점</div>`).join('')}</div>`;
+    if (alt.courses && alt.courses[0]) {
+      altBox.innerHTML += `<div style="margin-top:14px;font-size:0.83rem;color:var(--gray-700)">`;
+      alt.courses.forEach(c => { altBox.innerHTML += `<p style="margin-bottom:6px"><strong>${c.course_name}:</strong> ${c.reasoning}</p>`; });
+      altBox.innerHTML += `</div>`;
+    }
+  } else {
+    document.getElementById('aiStrategySection').style.display = 'none';
+    document.getElementById('aiCourseSection').style.display = 'none';
+    document.getElementById('warningsSection').style.display = 'none';
+    document.getElementById('altSection').style.display = 'none';
+    document.getElementById('chartSectionNum').textContent = '6';
+  }
+
+  // Charts
+  renderCharts(courses);
+}
+
+function getRiskLevel(prob) {
+  if (prob >= 0.7) return 'low';
+  if (prob >= 0.4) return 'medium';
+  return 'high';
+}
+
+function renderCharts(courses) {
+  const container = document.getElementById('chartSection');
+  container.innerHTML = '';
+
+  courses.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'chart-course';
+    const maxProb = Math.max(...Object.values(c.curve));
+
+    const keyPoints = [5,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36];
+    const bars = keyPoints.filter(m => m <= c.maxMlg + 2);
+
+    div.innerHTML = `<h4>${c.priority}순위 | ${c.courseName} — 마일리지별 합격확률</h4>
+    <div class="chart-bars">
+      ${bars.map(m => {
+        const prob = c.curve[m] || 0;
+        const heightPct = maxProb > 0 ? Math.round(prob / maxProb * 100) : 0;
+        const isRec = m === c.recommendedMileage;
+        const color = isRec ? 'var(--navy)' : prob >= 0.7 ? 'var(--green)' : prob >= 0.4 ? 'var(--yellow)' : '#ddd';
+        return `<div class="chart-bar-wrap">
+          <div class="chart-bar" style="height:${Math.max(heightPct,2)}%;background:${color};${isRec?'outline:2px solid var(--accent);outline-offset:1px':''}" data-tip="${m}점: ${Math.round(prob*100)}%"></div>
+          <div class="chart-bar-label">${m}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="chart-legend">
+      <span><span class="legend-dot" style="background:var(--navy)"></span> 추천 마일리지</span>
+      <span><span class="legend-dot" style="background:var(--green)"></span> 70%+</span>
+      <span><span class="legend-dot" style="background:var(--yellow)"></span> 40~70%</span>
+      <span><span class="legend-dot" style="background:#ddd"></span> 40% 미만</span>
+    </div>`;
+    container.appendChild(div);
+  });
+}
+
+function showResults() {
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ==================== HELPERS ====================
+function setProgress(show, pct, text) {
+  document.getElementById('progressWrap').style.display = show ? 'block' : 'none';
+  document.getElementById('progressText').style.display = show ? 'block' : 'none';
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = text;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

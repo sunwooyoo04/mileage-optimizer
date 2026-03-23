@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>프로젝트 기획안 — 연세대 마일리지 최적화</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue-deep:   #002D6A;
+    --blue-mid:    #004EA2;
+    --blue-light:  #1A73E8;
+    --blue-pale:   #E8F0FB;
+    --accent:      #C8A84B;   /* 연세 골드 */
+    --accent-dim:  #F5EDD3;
+    --ink:         #111827;
+    --ink-mid:     #374151;
+    --ink-soft:    #6B7280;
+    --rule:        #E5E7EB;
+    --bg:          #F7F8FA;
+    --card:        #FFFFFF;
+    --code-bg:     #0F172A;
+    --code-fg:     #94C5F8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Serif KR', Georgia, serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.75;
+    font-size: 15px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--blue-deep) 0%, var(--blue-mid) 60%, #1557C0 100%);
+    color: #fff;
+    padding: 64px 40px 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 40px;
+    background: var(--bg);
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .header-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-label::before {
+    content: '';
+    display: block;
+    width: 28px; height: 2px;
+    background: var(--accent);
+  }
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--accent); }
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  /* ── BADGES ── */
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 24px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    border: 1.5px solid;
+  }
+  .badge-gold   { background: rgba(200,168,75,0.15); border-color: var(--accent);     color: var(--accent); }
+  .badge-blue   { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.4); color: #fff; }
+  .badge-green  { background: rgba(52,211,153,0.15); border-color: #34D399;           color: #34D399; }
+  .badge-purple { background: rgba(167,139,250,0.15); border-color: #A78BFA;          color: #A78BFA; }
+  .badge svg { width: 12px; height: 12px; }
+
+  /* ── LAYOUT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── SECTION TITLES ── */
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--blue-light);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--blue-deep);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--blue-pale);
+    position: relative;
+  }
+  h2::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0;
+    width: 48px; height: 2px;
+    background: var(--blue-light);
+  }
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--blue-mid);
+    margin: 20px 0 10px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+    border: 1px solid var(--rule);
+    box-shadow: 0 2px 12px rgba(0,46,106,0.06);
+  }
+  .card + .card { margin-top: 0; }
+
+  /* ── PURPOSE BOX ── */
+  .purpose-box {
+    background: var(--blue-pale);
+    border-left: 4px solid var(--blue-light);
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--ink-mid);
+    line-height: 1.7;
+  }
+
+  /* ── FLOWCHART ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin: 24px 0;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .flow-node {
+    background: var(--blue-deep);
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    min-width: 100px;
+    line-height: 1.4;
+  }
+  .flow-node.accent { background: var(--accent); color: var(--blue-deep); font-weight: 700; }
+  .flow-node.light  { background: var(--blue-pale); color: var(--blue-deep); border: 1.5px solid var(--blue-light); }
+  .flow-node.green  { background: #ECFDF5; color: #065F46; border: 1.5px solid #34D399; }
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--blue-light);
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  /* ── STEP LIST ── */
+  .step-list { list-style: none; padding: 0; margin: 16px 0; }
+  .step-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14px;
+    color: var(--ink-mid);
+  }
+  .step-list li:last-child { border-bottom: none; }
+  .step-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--blue-mid);
+    color: #fff;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+  .step-list li strong { display: block; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+  /* ── INPUT TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 16px 0;
+  }
+  thead th {
+    background: var(--blue-deep);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  thead th:first-child { border-radius: 6px 0 0 0; }
+  thead th:last-child  { border-radius: 0 6px 0 0; }
+  tbody tr:nth-child(even) { background: var(--blue-pale); }
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-mid);
+    vertical-align: top;
+  }
+  tbody td:first-child { font-weight: 600; color: var(--ink); white-space: nowrap; }
+  tbody tr:hover { background: #EDF3FD; }
+
+  /* ── PRIORITY LIST ── */
+  .priority-list { list-style: none; padding: 0; margin: 12px 0; }
+  .priority-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    color: var(--ink-mid);
+    line-height: 1.5;
+  }
+  .priority-list li:hover { background: var(--blue-pale); }
+  .pri-key {
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--blue-light);
+    width: 20px;
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .code-lang {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .code-dots span {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .code-dots span:nth-child(1) { background: #FF5F57; }
+  .code-dots span:nth-child(2) { background: #FFBD2E; }
+  .code-dots span:nth-child(3) { background: #28C840; }
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    font-family: 'DM Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--code-fg);
+    white-space: pre;
+  }
+  .s  { color: #A8CC8C; }   /* string */
+  .k  { color: #CC99CD; }   /* keyword */
+  .n  { color: #F8C555; }   /* number */
+  .c  { color: #5C6F7B; }   /* comment */
+  .p  { color: #D4D4D4; }   /* punctuation */
+  .t  { color: #79CBFE; }   /* type */
+
+  /* ── ALGO BOX ── */
+  .algo-box {
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+  }
+  .algo-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    border-bottom: 1px solid var(--rule);
+    font-size: 13.5px;
+  }
+  .algo-row:last-child { border-bottom: none; }
+  .algo-label {
+    background: var(--blue-pale);
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11.5px;
+    color: var(--blue-mid);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+  }
+  .algo-val {
+    padding: 12px 16px;
+    color: var(--ink-mid);
+    line-height: 1.6;
+  }
+
+  /* ── SCHEMA CALLOUT ── */
+  .schema-callout {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    border-radius: 10px;
+    padding: 4px;
+    margin: 16px 0;
+  }
+  .schema-inner {
+    background: #0F172A;
+    border-radius: 8px;
+    padding: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #94A3B8;
+    overflow-x: auto;
+  }
+
+  /* ── TODO LIST ── */
+  .todo-list { list-style: none; padding: 0; margin: 12px 0; }
+  .todo-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--ink-mid);
+  }
+  .todo-list li:hover { background: var(--blue-pale); }
+  .todo-icon {
+    width: 20px; height: 20px;
+    border-radius: 4px;
+    border: 2px solid var(--rule);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  /* ── WARN BOX ── */
+  .warn-box {
+    background: #FFFBEB;
+    border: 1px solid #FCD34D;
+    border-left: 4px solid #F59E0B;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    font-size: 13.5px;
+    color: #92400E;
+    margin: 16px 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    header { padding: 48px 24px 44px; }
+    .card  { padding: 22px 18px; }
+    .flow-node { font-size: 10.5px; padding: 8px 12px; min-width: 80px; }
+    .algo-row { grid-template-columns: 1fr; }
+    .algo-label { border-bottom: 1px solid var(--rule); }
+    table { font-size: 12px; }
+  }
+
+  /* ── SCROLL ANIMATIONS ── */
+  .card {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: fadeUp 0.5s ease forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.12s; }
+  .card:nth-child(3) { animation-delay: 0.19s; }
+  .card:nth-child(4) { animation-delay: 0.26s; }
+  .card:nth-child(5) { animation-delay: 0.33s; }
+  .card:nth-child(6) { animation-delay: 0.40s; }
+  .card:nth-child(7) { animation-delay: 0.47s; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-inner">
+    <p class="header-label">Project Proposal · 2026</p>
+    <h1>연세대 마일리지<br><span>수강신청 최적화 도구</span></h1>
+    <div class="header-meta">
+      <span>Yonsei University</span>
+      <span>·</span>
+      <span>Web App + Python Scraper</span>
+      <span>·</span>
+      <span>LLM-Powered Strategy</span>
+    </div>
+    <div class="badges">
+      <span class="badge badge-gold">
+        <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 5v3l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        OpenRouter API · gpt-4o-mini
+      </span>
+      <span class="badge badge-green">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 4h12v2H2zm2 4h8v2H4zm2 4h4v2H6z"/></svg>
+        Structured Output
+      </span>
+      <span class="badge badge-blue">
+        <svg viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M5 14h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        Web App · 브라우저 동작
+      </span>
+      <span class="badge badge-purple">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2l1.5 4h4l-3 2.5 1.5 4L8 10l-4 2.5 1.5-4L2 6h4z"/></svg>
+        직접 기획
+      </span>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── 1. 프로젝트 개요 ── -->
+  <div class="section-num">Section 01</div>
+  <h2>프로젝트 개요</h2>
+
+  <div class="card">
+    <div class="purpose-box">
+      연세대학교 마일리지 수강신청 시스템의 <strong>역대 신청 데이터(3~4년치)</strong>를 스크래핑하고,
+      각 과목별 합격 확률을 통계적으로 계산한 뒤, <strong>GPT-4o-mini (OpenRouter)</strong>가
+      총 마일리지 예산 안에서 우선순위를 반영한 <strong>최적 배분 전략</strong>을 Structured Output으로 생성한다.
+    </div>
+
+    <h3>핵심 아이디어</h3>
+    <p style="font-size:14px;color:var(--ink-mid);line-height:1.8;">
+      수강신청 마일리지 역대 기록은 <strong>로그인 없이 공개</strong>되어 있다.
+      이 데이터로 "과거에 X점 넣은 사람의 프로필이면 붙었는가"를 시뮬레이션할 수 있다.
+      단순 통계 수치를 LLM에게 넘겨 자연어 전략과 리스크 분석까지 함께 받는 것이 이 프로젝트의 차별점이다.
+    </p>
+  </div>
+
+  <!-- ── 2. 시스템 아키텍처 ── -->
+  <div class="section-num">Section 02</div>
+  <h2>전체 시스템 아키텍처</h2>
+
+  <div class="card">
+    <h3>데이터 흐름</h3>
+    <div class="flow">
+      <div class="flow-row">
+        <div class="flow-node">🐍 Python<br>스크래퍼</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node accent">JSON<br>파일 출력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node light">HTML Web App<br>파일 업로드</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node light">사용자<br>정보 입력</div>
+      </div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-row">
+        <div class="flow-node light">사용자<br>정보 입력</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">JS 통계<br>계산</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">OpenRouter<br>LLM 호출</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node accent">Structured<br>Output JSON</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node green">결과 화면<br>출력</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:28px;">두 컴포넌트 역할</h3>
+    <div class="algo-box">
+      <div class="algo-row">
+        <div class="algo-label">Python Scraper</div>
+        <div class="algo-val">연세포탈에서 과목별 역대 신청자 데이터 수집. Playwright 기반. 결과를 <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--blue-pale);padding:1px 6px;border-radius:4px;">mileage_XXXX.json</code>으로 저장.</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">HTML Web App</div>
+        <div class="algo-val">JSON 업로드 → 내 프로필 입력 → JS로 합격 확률 계산 → OpenRouter API 호출 → 전략 출력. 빌드 없이 브라우저에서 바로 실행.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. 개발 순서 ── -->
+  <div class="section-num">Section 03</div>
+  <h2>개발 순서</h2>
+
+  <div class="card">
+    <ul class="step-list">
+      <li>
+        <div class="step-num">1</div>
+        <div>
+          <strong>HTML Web App 먼저 완성</strong>
+          샘플 JSON 데이터(mock)로 모든 UI·로직·LLM 호출을 완성한다.
+          과제 핵심 요구사항(OpenRouter API, Structured Output, Web App)이 모두 여기에 있으므로 우선순위 최상.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">2</div>
+        <div>
+          <strong>JSON 출력 구조 확정</strong>
+          HTML에서 필요한 데이터 필드를 기반으로 스크래퍼 출력 JSON 스키마를 정의한다.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">3</div>
+        <div>
+          <strong>Python 스크래퍼 수정</strong>
+          기존 CSV 이중 출력 → 단일 JSON 출력으로 포맷 변경. HTML이 의존하는 필드명에 맞춤.
+        </div>
+      </li>
+      <li>
+        <div class="step-num">4</div>
+        <div>
+          <strong>통합 테스트</strong>
+          실제 스크래핑 데이터로 전체 파이프라인(스크래퍼 → JSON → HTML → LLM 결과) 검증.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ── 4. HTML Web App 설계 ── -->
+  <div class="section-num">Section 04</div>
+  <h2>HTML Web App 상세 설계</h2>
+
+  <!-- 4-1 입력 -->
+  <div class="card">
+    <h3>4-1 &nbsp;입력 항목</h3>
+
+    <p style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">① 내 고정 정보 (페이지 상단에서 한 번만 입력)</p>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>타입</th>
+          <th>설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>학년</td><td>Select 1~4</td><td>동점 시 고학년 우선 처리에 활용</td></tr>
+        <tr><td>특수교육대상자 여부</td><td>Toggle Y/N</td><td>우선순위 b 항목</td></tr>
+        <tr><td>졸업신청 여부</td><td>Toggle Y/N</td><td>우선순위 e 항목</td></tr>
+        <tr><td>총 이수비율</td><td>Number 0.00~1.00</td><td>총이수학점 / 졸업이수학점, 우선순위 g</td></tr>
+        <tr><td>직전학기 이수비율</td><td>Number 0.00~1.00</td><td>직전학기 이수학점 / 수강가능학점, 우선순위 h</td></tr>
+        <tr><td>총 신청 과목수</td><td>Number 1~6</td><td>우선순위 d 항목 (최대 6개 반영)</td></tr>
+        <tr><td>총 보유 마일리지</td><td>Number</td><td>배분 예산 상한 (보통 72 or 76점)</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:13px;color:var(--ink-soft);margin: 20px 0 12px;">② 과목별 입력 (최대 6개, 카드 형태로 반복)</p>
+    <table>
+      <thead>
+        <tr>
+          <th>항목</th>
+          <th>타입</th>
+          <th>설명</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>우선순위</td><td>Select 1~6</td><td>마일리지 배분 가중치 결정</td></tr>
+        <tr><td>전공자 여부</td><td>Toggle Y/N</td><td>과목마다 다름. 우선순위 c 항목</td></tr>
+        <tr><td>초수강 여부</td><td>Toggle Y/N</td><td>해당 과목을 처음 듣는지. 우선순위 f 항목</td></tr>
+        <tr><td>과목 JSON 파일</td><td>File Upload</td><td>Python 스크래퍼 출력 파일 1개</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 4-2 통계 계산 -->
+  <div class="card">
+    <h3>4-2 &nbsp;JS 통계 계산 로직</h3>
+    <p style="font-size:14px;color:var(--ink-mid);margin-bottom:12px;">
+      Python의 <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--blue-pale);padding:1px 6px;border-radius:4px;">simulate_rank()</code>를 JS로 포팅한다.
+      각 과목 × 역대 학기 × 마일리지 후보값에 대해 시뮬레이션을 반복해 합격률을 계산한다.
+    </p>
+
+    <div class="algo-box">
+      <div class="algo-row">
+        <div class="algo-label">입력</div>
+        <div class="algo-val">내 프로필 + 마일리지 X, 역대 학기별 신청자 목록 (수강여부 Y인 사람 = 합격)</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">핵심 처리</div>
+        <div class="algo-val">내 레코드를 신청자 풀에 삽입 → 우선순위 기준 a~h로 정렬 → 내 순위 도출 → 정원 이내 여부 판별</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">합격률</div>
+        <div class="algo-val">합격한 학기 수 / 전체 학기 수 (마일리지 X를 1점씩 올려가며 반복)</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">출력</div>
+        <div class="algo-val">과목별 [ {mileage: X, probability: 0.xx} ] 배열 → LLM 프롬프트에 삽입</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">우선순위 정렬 기준 (a → h)</h3>
+    <ul class="priority-list">
+      <li><span class="pri-key">a</span> 마일리지 높을수록 우선</li>
+      <li><span class="pri-key">b</span> 특수교육대상자 우선</li>
+      <li><span class="pri-key">c</span> 전공자 우선 (개설학과 설정)</li>
+      <li><span class="pri-key">d</span> 총 신청과목수 많을수록 우선 (최대 6개 반영)</li>
+      <li><span class="pri-key">e</span> 졸업/수료 신청자 우선</li>
+      <li><span class="pri-key">f</span> 초수강자 우선</li>
+      <li><span class="pri-key">g</span> 총이수학점 / 졸업이수학점 비율 높을수록 우선 (max 1.00)</li>
+      <li><span class="pri-key">h</span> 직전학기 이수학점 / 수강가능학점 비율 높을수록 우선 (max 1.00)</li>
+      <li><span class="pri-key">i</span> 동점 시 난수 부여</li>
+    </ul>
+  </div>
+
+  <!-- 4-3 최적화 -->
+  <div class="card">
+    <h3>4-3 &nbsp;최적화 알고리즘</h3>
+    <p style="font-size:14px;color:var(--ink-mid);margin-bottom:16px;">
+      JS에서 1차 최적 배분을 먼저 계산하고, 그 결과를 LLM에 넘긴다.
+    </p>
+    <div class="algo-box">
+      <div class="algo-row">
+        <div class="algo-label">목적함수</div>
+        <div class="algo-val">가중 합격확률 합산 최대화<br>
+          <code style="font-family:'DM Mono',monospace;font-size:12px;">Σ (weight[i] × P(course_i, mileage_i))</code>
+        </div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">제약 조건 1</div>
+        <div class="algo-val">총 투입 마일리지 ≤ 총 보유 마일리지 (예: 72점)</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">제약 조건 2</div>
+        <div class="algo-val">과목별 투입 ≤ 과목별 최대 마일리지 (JSON에서 읽음, 예: 12점 / 36점)</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">우선순위 가중치</div>
+        <div class="algo-val">1순위: 6pt / 2순위: 5pt / … / 6순위: 1pt (조정 가능)</div>
+      </div>
+      <div class="algo-row">
+        <div class="algo-label">탐색 방법</div>
+        <div class="algo-val">Greedy + 브루트포스 조합 (과목 수 ≤ 6이라 현실적)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4-4 LLM -->
+  <div class="card">
+    <h3>4-4 &nbsp;OpenRouter LLM 호출 (gpt-4o-mini)</h3>
+    <p style="font-size:14px;color:var(--ink-mid);margin-bottom:16px;">
+      JS 최적화 결과(배분안 + 확률 배열)를 프롬프트에 담아 LLM에 전달한다.
+      <strong>JSON Schema Structured Output</strong>을 강제해 정형화된 응답을 받는다.
+    </p>
+
+    <h3>응답 JSON 스키마</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div class="code-lang">JSON Schema · response_format</div>
+      </div>
+      <pre><span class="p">{</span>
+  <span class="t">"strategy_summary"</span><span class="p">:</span> <span class="s">"string"</span><span class="p">,</span>          <span class="c">// 전체 전략 한 줄 요약</span>
+  <span class="t">"total_mileage_used"</span><span class="p">:</span> <span class="s">"number"</span><span class="p">,</span>        <span class="c">// 실제 사용 마일리지 합계</span>
+  <span class="t">"courses"</span><span class="p">: [</span>
+    <span class="p">{</span>
+      <span class="t">"priority"</span><span class="p">:</span>               <span class="s">"number"</span><span class="p">,</span>
+      <span class="t">"course_code"</span><span class="p">:</span>            <span class="s">"string"</span><span class="p">,</span>
+      <span class="t">"recommended_mileage"</span><span class="p">:</span>    <span class="s">"number"</span><span class="p">,</span>
+      <span class="t">"acceptance_probability"</span><span class="p">:</span> <span class="n">0.0</span><span class="p">~</span><span class="n">1.0</span><span class="p">,</span>
+      <span class="t">"risk_level"</span><span class="p">:</span>             <span class="s">"low | medium | high"</span><span class="p">,</span>
+      <span class="t">"min_safe_mileage"</span><span class="p">:</span>       <span class="s">"number"</span><span class="p">,</span>  <span class="c">// 합격 기대 최소 마일리지</span>
+      <span class="t">"reasoning"</span><span class="p">:</span>             <span class="s">"string"</span>   <span class="c">// 판단 근거</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="t">"warnings"</span><span class="p">: [</span><span class="s">"string"</span><span class="p">],</span>               <span class="c">// 리스크 경고 메시지 배열</span>
+  <span class="t">"alternative_distribution"</span><span class="p">: {</span>
+    <span class="t">"description"</span><span class="p">:</span> <span class="s">"string"</span><span class="p">,</span>             <span class="c">// 보수적 배분 설명</span>
+    <span class="t">"courses"</span><span class="p">: [</span><span class="s">"…same structure…"</span><span class="p">]</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre>
+    </div>
+
+    <h3>LLM 역할 요약</h3>
+    <ul class="priority-list">
+      <li><span class="pri-key">→</span> JS가 계산한 최적 배분이 합리적인지 검토 및 보완</li>
+      <li><span class="pri-key">→</span> 리스크 분석 (경쟁이 급등하는 과목, 마일리지 쏠림 위험 등)</li>
+      <li><span class="pri-key">→</span> 보수적 대안 배분 제시 (위험 분산)</li>
+      <li><span class="pri-key">→</span> 자연어 전략 설명 (사용자 친화적 출력)</li>
+    </ul>
+  </div>
+
+  <!-- ── 5. Python 스크래퍼 수정 ── -->
+  <div class="section-num">Section 05</div>
+  <h2>Python 스크래퍼 수정 사항</h2>
+
+  <div class="card">
+    <p style="font-size:14px;color:var(--ink-mid);margin-bottom:20px;">
+      기존 스크래퍼는 CSV 2개를 출력한다. HTML이 직접 파싱할 수 있도록 <strong>단일 JSON 출력</strong>으로 변경한다.
+    </p>
+    <h3>출력 JSON 구조 (과목 1개 당 1파일)</h3>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div class="code-lang">mileage_HUM2038-01.json</div>
+      </div>
+      <pre><span class="p">{</span>
+  <span class="t">"course_info"</span><span class="p">: {</span>
+    <span class="t">"course_name"</span><span class="p">:</span>    <span class="s">"글쓰기"</span><span class="p">,</span>
+    <span class="t">"course_code"</span><span class="p">:</span>    <span class="s">"HUM2038"</span><span class="p">,</span>
+    <span class="t">"section"</span><span class="p">:</span>        <span class="s">"01"</span><span class="p">,</span>
+    <span class="t">"max_mileage"</span><span class="p">:</span>    <span class="n">36</span><span class="p">,</span>           <span class="c">// 이 과목에 투입 가능한 최대 마일리지</span>
+    <span class="t">"total_capacity"</span><span class="p">:</span> <span class="n">30</span><span class="p">,</span>
+    <span class="t">"major_quota"</span><span class="p">:</span>    <span class="n">10</span>            <span class="c">// 전공자 전용 쿼터 (없으면 0)</span>
+  <span class="p">},</span>
+  <span class="t">"semesters"</span><span class="p">: [</span>
+    <span class="p">{</span>
+      <span class="t">"semester_name"</span><span class="p">:</span> <span class="s">"2024년 1학기"</span><span class="p">,</span>
+      <span class="t">"summary"</span><span class="p">: {</span>
+        <span class="t">"total_capacity"</span><span class="p">:</span> <span class="n">30</span><span class="p">,</span>
+        <span class="t">"major_quota"</span><span class="p">:</span>    <span class="n">10</span>
+      <span class="p">},</span>
+      <span class="t">"applicants"</span><span class="p">: [</span>
+        <span class="p">{</span>
+          <span class="t">"mlgVal"</span><span class="p">:</span>                   <span class="n">20</span><span class="p">,</span>   <span class="c">// 투입 마일리지</span>
+          <span class="t">"dsstdYn"</span><span class="p">:</span>                  <span class="s">"N"</span><span class="p">,</span>  <span class="c">// 특수교육대상자</span>
+          <span class="t">"mjsbjYn"</span><span class="p">:</span>                  <span class="s">"Y"</span><span class="p">,</span>  <span class="c">// 전공자</span>
+          <span class="t">"aplySubjcCnt"</span><span class="p">:</span>             <span class="n">5</span><span class="p">,</span>    <span class="c">// 총 신청과목수</span>
+          <span class="t">"grdtnAplyYn"</span><span class="p">:</span>              <span class="s">"N"</span><span class="p">,</span>  <span class="c">// 졸업신청</span>
+          <span class="t">"fratlcYn"</span><span class="p">:</span>                 <span class="s">"Y"</span><span class="p">,</span>  <span class="c">// 초수강</span>
+          <span class="t">"ttCmpsjCdtRto"</span><span class="p">:</span>            <span class="n">0.72</span><span class="p">,</span> <span class="c">// 총 이수비율</span>
+          <span class="t">"jstbfSmtCmpsjCdtRto"</span><span class="p">:</span>      <span class="n">0.95</span><span class="p">,</span> <span class="c">// 직전학기 이수비율</span>
+          <span class="t">"lsnYn"</span><span class="p">:</span>                    <span class="s">"Y"</span>   <span class="c">// 수강여부 (Y=합격)</span>
+        <span class="p">}</span>
+      <span class="p">]</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span></pre>
+    </div>
+  </div>
+
+  <!-- ── 6. 샘플 JSON ── -->
+  <div class="section-num">Section 06</div>
+  <h2>샘플 JSON (개발 테스트용)</h2>
+
+  <div class="card">
+    <p style="font-size:14px;color:var(--ink-mid);margin-bottom:16px;">
+      실제 스크래핑 전에 아래 구조의 mock 파일을 만들어 HTML에서 테스트한다.
+      파일명: <code style="font-family:'DM Mono',monospace;font-size:12px;background:var(--blue-pale);padding:1px 6px;border-radius:4px;">sample_HUM2038-01.json</code>
+    </p>
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dots"><span></span><span></span><span></span></div>
+        <div class="code-lang">sample_HUM2038-01.json · mock data</div>
+      </div>
+      <pre><span class="p">{</span>
+  <span class="t">"course_info"</span><span class="p">: {</span>
+    <span class="t">"course_name"</span><span class="p">:</span> <span class="s">"글쓰기"</span><span class="p">,</span> <span class="t">"course_code"</span><span class="p">:</span> <span class="s">"HUM2038"</span><span class="p">,</span>
+    <span class="t">"section"</span><span class="p">:</span> <span class="s">"01"</span><span class="p">,</span> <span class="t">"max_mileage"</span><span class="p">:</span> <span class="n">36</span><span class="p">,</span>
+    <span class="t">"total_capacity"</span><span class="p">:</span> <span class="n">25</span><span class="p">,</span> <span class="t">"major_quota"</span><span class="p">:</span> <span class="n">0</span>
+  <span class="p">},</span>
+  <span class="t">"semesters"</span><span class="p">: [</span>
+    <span class="p">{</span>
+      <span class="t">"semester_name"</span><span class="p">:</span> <span class="s">"2023년 1학기"</span><span class="p">,</span>
+      <span class="t">"summary"</span><span class="p">: {</span> <span class="t">"total_capacity"</span><span class="p">:</span> <span class="n">25</span><span class="p">,</span> <span class="t">"major_quota"</span><span class="p">:</span> <span class="n">0</span> <span class="p">},</span>
+      <span class="t">"applicants"</span><span class="p">: [</span>
+        <span class="p">{</span> <span class="t">"mlgVal"</span><span class="p">:</span><span class="n">18</span><span class="p">,</span><span class="t">"dsstdYn"</span><span class="p">:</span><span class="s">"N"</span><span class="p">,</span><span class="t">"mjsbjYn"</span><span class="p">:</span><span class="s">"N"</span><span class="p">,</span><span class="t">"aplySubjcCnt"</span><span class="p">:</span><span class="n">6</span><span class="p">,</span>
+          <span class="t">"grdtnAplyYn"</span><span class="p">:</span><span class="s">"N"</span><span class="p">,</span><span class="t">"fratlcYn"</span><span class="p">:</span><span class="s">"Y"</span><span class="p">,</span><span class="t">"ttCmpsjCdtRto"</span><span class="p">:</span><span class="n">0.80</span><span class="p">,</span>
+          <span class="t">"jstbfSmtCmpsjCdtRto"</span><span class="p">:</span><span class="n">1.00</span><span class="p">,</span><span class="t">"lsnYn"</span><span class="p">:</span><span class="s">"Y"</span> <span class="p">},</span>
+        <span class="c">// ... 나머지 신청자 레코드 ...</span>
+      <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="p">{</span> <span class="t">"semester_name"</span><span class="p">:</span> <span class="s">"2024년 1학기"</span><span class="p">,</span> <span class="t">"summary"</span><span class="p">:</span> <span class="p">{</span><span class="t">"total_capacity"</span><span class="p">:</span><span class="n">25</span><span class="p">,</span><span class="t">"major_quota"</span><span class="p">:</span><span class="n">0</span><span class="p">},</span>
+      <span class="t">"applicants"</span><span class="p">: [</span> <span class="c">/* ... */</span> <span class="p">] }
+  ]
+}</span></pre>
+    </div>
+  </div>
+
+  <!-- ── 7. 미구현/추후 ── -->
+  <div class="section-num">Section 07</div>
+  <h2>미구현 사항 및 추후 과제</h2>
+
+  <div class="card">
+    <div class="warn-box">
+      아래 항목은 1차 구현에서 제외된다. 데이터 구조 확인 후 순차적으로 추가한다.
+    </div>
+
+    <ul class="todo-list" style="margin-top:16px;">
+      <li>
+        <div class="todo-icon">?</div>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:var(--ink);">학년별 쿼터 처리</strong>
+          <span style="font-size:13px;color:var(--ink-soft);">일부 과목은 학년별 정원이 나뉜다. 스크래핑 데이터에서 해당 필드 이름 확인 후 추가 구현.</span>
+        </div>
+      </li>
+      <li>
+        <div class="todo-icon">□</div>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:var(--ink);">복수 과목 스크래핑 자동화</strong>
+          <span style="font-size:13px;color:var(--ink-soft);">현재 스크래퍼는 과목 1개씩 수동 실행. 6개 학정번호 일괄 입력 → JSON 6개 자동 생성으로 개선.</span>
+        </div>
+      </li>
+      <li>
+        <div class="todo-icon">□</div>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:var(--ink);">배분 결과 저장/공유</strong>
+          <span style="font-size:13px;color:var(--ink-soft);">LLM 응답 결과를 JSON으로 내보내거나 링크로 공유하는 기능.</span>
+        </div>
+      </li>
+      <li>
+        <div class="todo-icon">□</div>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:var(--ink);">우선순위 가중치 커스터마이징</strong>
+          <span style="font-size:13px;color:var(--ink-soft);">사용자가 UI에서 과목별 가중치를 직접 조정할 수 있는 슬라이더 추가.</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+</main>
+
+<footer>
+  연세대학교 마일리지 수강신청 최적화 도구 · Project Proposal · 2026
+</footer>
+
+</body>
+</html>
