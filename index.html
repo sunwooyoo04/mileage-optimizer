@@ -838,22 +838,21 @@ function optimize(courses, budget) {
   const n = courses.length;
   if (n === 0) return [];
 
-  const weights = courses.map(c => 7 - c.priority);
   const maxPerCourse = courses.map(c => c.maxMlg);
 
   // Greedy + local search approach
   let alloc = courses.map(() => 1);
   let remaining = budget - n;
 
-  // Score function
-  const score = (alloc) => alloc.reduce((sum, m, i) => sum + weights[i] * (courses[i].curve[m] || 0), 0);
+  // Score function — 모든 과목 동일 가중치, 전체 합격확률 합산 최대화
+  const score = (alloc) => alloc.reduce((sum, m, i) => sum + (courses[i].curve[m] || 0), 0);
 
   // Greedy: add 1 mileage to the course with the highest marginal gain
   while (remaining > 0) {
     let bestGain = -Infinity, bestIdx = -1;
     for (let i = 0; i < n; i++) {
       if (alloc[i] >= maxPerCourse[i]) continue;
-      const gain = weights[i] * ((courses[i].curve[alloc[i]+1] || 0) - (courses[i].curve[alloc[i]] || 0));
+      const gain = (courses[i].curve[alloc[i]+1] || 0) - (courses[i].curve[alloc[i]] || 0);
       if (gain > bestGain) { bestGain = gain; bestIdx = i; }
     }
     if (bestIdx === -1) break;
