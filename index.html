@@ -583,8 +583,7 @@ function parseJsonFile(i, file) {
 }
 
 // ==================== AUTO FETCH ====================
-    const API_URL = localStorage.getItem('api_url') || '';
-
+    const apiUrl = "https://mileage-optimizer-1.onrender.com";
     async function fetchCourse(idx) {
       const input = document.getElementById(`course-id-${idx}`);
       const courseId = input ? input.value.trim() : state.courses[idx].courseId;
