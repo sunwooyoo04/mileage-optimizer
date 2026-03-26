@@ -8,3 +8,9 @@ services:
     envVars:
       - key: PYTHONUNBUFFERED
         value: "1"
+
+  - type: web
+    name: mileage-optimizer
+    env: static
+    staticPublishPath: .
+    buildCommand: ""
