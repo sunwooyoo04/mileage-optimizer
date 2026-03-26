@@ -589,19 +589,29 @@ function parseJsonFile(i, file) {
       const courseId = input ? input.value.trim() : state.courses[idx].courseId;
       if (!courseId) { showToast('학정번호를 입력해주세요. (예: 2026-1-HUM2038-01)'); return; }
 
-      let url = localStorage.getItem('api_url');
-      if (!url) {
-        url = prompt('백엔드 서버 URL을 입력하세요 (예: https://xxx.onrender.com)');
-        if (!url) return;
-        localStorage.setItem('api_url', url);
-      }
-
       const btn = document.getElementById(`fetch-btn-${idx}`);
       btn.disabled = true;
-      btn.textContent = '불러오는 중...';
+      btn.textContent = '서버 연결 중...';
 
       try {
-        const res = await fetch(`${url.replace(/\/$/, '')}/scrape`, {
+        const base = apiUrl.replace(/\/$/, '');
+
+        // 서버가 슬립 상태일 수 있으므로 health check로 먼저 깨움 (최대 60초 대기)
+        const healthCtrl = new AbortController();
+        const healthTimer = setTimeout(() => healthCtrl.abort(), 60000);
+        try {
+          const health = await fetch(`${base}/health`, { signal: healthCtrl.signal });
+          clearTimeout(healthTimer);
+          if (!health.ok) throw new Error('서버 응답 없음');
+        } catch(e) {
+          clearTimeout(healthTimer);
+          if (e.name === 'AbortError') throw new Error('서버 응답 시간 초과 (60초). Render 서버가 재시작 중일 수 있습니다. 잠시 후 다시 시도해주세요.');
+          throw e;
+        }
+
+        btn.textContent = '불러오는 중...';
+
+        const res = await fetch(`${base}/scrape`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ course_id: courseId }),

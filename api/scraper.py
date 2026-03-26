@@ -6,6 +6,27 @@ INIT_URL = f"{BASE_URL}/com/lgin/SsoCtr/initExtPageWork.do?link=handbList&locale
 
 SMT_INPUT = {"1": "10", "여름": "11", "2": "20", "겨울": "21"}
 
+# JS: 과목번호 입력창 중심 좌표 반환 (빈 값의 spellcheck 텍스트 입력)
+_JS_COURSE_INPUT = """() => {
+    const el = Array.from(document.querySelectorAll("input.cl-text"))
+        .find(el => el.value === "" && el.getAttribute("spellcheck") === "true");
+    if (!el) return null;
+    const b = el.getBoundingClientRect();
+    return {x: b.x + b.width / 2, y: b.y + b.height / 2};
+}"""
+
+# JS: 가장 마지막에 보이는 '조회' 링크 중심 좌표 반환
+_JS_SEARCH_BTN = """() => {
+    let last = null;
+    for (const el of document.querySelectorAll("a.cl-text-wrapper")) {
+        const b = el.getBoundingClientRect();
+        if (b.width > 0 && b.height > 0 && el.innerText.trim() === "\uC870\uD68C") last = el;
+    }
+    if (!last) return null;
+    const b = last.getBoundingClientRect();
+    return {x: b.x + b.width / 2, y: b.y + b.height / 2};
+}"""
+
 
 def parse_course_number(raw: str):
     parts = raw.strip().split("-")
@@ -69,12 +90,21 @@ def scrape(raw: str) -> dict:
 
         page.goto(INIT_URL, wait_until="networkidle", timeout=30000)
 
-        page.mouse.click(390, 765)
+        # 과목번호 입력창을 CSS/HTML로 동적 탐색
+        input_pos = page.evaluate(_JS_COURSE_INPUT)
+        if not input_pos:
+            raise RuntimeError("과목번호 입력창을 찾을 수 없습니다.")
+        page.mouse.click(input_pos["x"], input_pos["y"])
         page.wait_for_timeout(300)
         page.keyboard.press("Control+A")
         page.keyboard.type(code, delay=50)
         page.wait_for_timeout(300)
-        page.mouse.click(1192, 765)
+
+        # 조회 버튼을 CSS/HTML로 동적 탐색
+        search_pos = page.evaluate(_JS_SEARCH_BTN)
+        if not search_pos:
+            raise RuntimeError("조회 버튼을 찾을 수 없습니다.")
+        page.mouse.click(search_pos["x"], search_pos["y"])
         page.wait_for_timeout(3000)
 
         for r in handb_rows:
@@ -83,9 +113,6 @@ def scrape(raw: str) -> dict:
                 break
         if not course_info and handb_rows:
             course_info = handb_rows[0]
-
-        page.mouse.click(569, 965)
-        page.wait_for_timeout(2000)
 
         def post(endpoint, params):
             return api_post(page, endpoint, params, menu_id, pgm_id)
@@ -112,9 +139,6 @@ def scrape(raw: str) -> dict:
                 "@d1#syySmtDivCd": s_code,
                 "@d#": "@d1#", "@d1#": "dmCond", "@d1#tp": "dm",
             })
-            # DEBUG: 응답 키 확인용 (학년별 정원 필드 찾기)
-            import sys as _sys
-            print(f"[DEBUG] findMlgAppcsResltList keys: {list(summary_data.keys())}", file=_sys.stderr)
             rows_s = summary_data.get("dsSles251", [])
             if rows_s:
                 mileage_summary[s_name] = rows_s[0]
@@ -164,7 +188,7 @@ def scrape(raw: str) -> dict:
 
     return {
         "course_info": {
-            "subjtNb": course_info.get("subjtNb", code),
+            "subjtNb": course_info.get("subjtnb", code),
             "subjtNm": course_info.get("subjtNm", ""),
             "corseDvclsNo": course_info.get("corseDvclsNo", section),
             "cgprfNm": course_info.get("cgprfNm", ""),
