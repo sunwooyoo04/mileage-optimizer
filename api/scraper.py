@@ -112,6 +112,9 @@ def scrape(raw: str) -> dict:
                 "@d1#syySmtDivCd": s_code,
                 "@d#": "@d1#", "@d1#": "dmCond", "@d1#tp": "dm",
             })
+            # DEBUG: 응답 키 확인용 (학년별 정원 필드 찾기)
+            import sys as _sys
+            print(f"[DEBUG] findMlgAppcsResltList keys: {list(summary_data.keys())}", file=_sys.stderr)
             rows_s = summary_data.get("dsSles251", [])
             if rows_s:
                 mileage_summary[s_name] = rows_s[0]

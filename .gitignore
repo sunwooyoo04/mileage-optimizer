@@ -5,3 +5,8 @@ openrouter_example.js
 node_modules/
 .vercel/
 .vercel
+.env
+__pycache__/
+*.pyc
+.DS_Store
+*.log

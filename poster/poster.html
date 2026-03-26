@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>연세대 마일리지 수강신청 최적화기</title>
+  <script src="lib/html2canvas.min.js"></script>
+  <script src="lib/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#040c1a; -webkit-font-smoothing:antialiased; }
+    .viewer { width:100vw; height:100vh; position:relative; overflow:hidden; user-select:none; }
+    .poster-container { width:1920px; height:1080px; transform-origin:0 0; position:absolute; top:50%; left:50%; overflow:hidden; border-radius:4px; box-shadow:0 20px 80px rgba(0,0,0,0.7); }
+    .poster { width:1920px; height:1080px; position:relative; overflow:hidden; }
+    .controls { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:12px; background:rgba(20,20,20,0.85); backdrop-filter:blur(12px); padding:8px 20px; border-radius:40px; border:1px solid rgba(255,255,255,0.08); z-index:1000; opacity:0; transition:opacity 0.3s; }
+    .viewer:hover .controls { opacity:1; }
+    .controls button { background:none; border:none; color:rgba(255,255,255,0.7); cursor:pointer; padding:6px 10px; border-radius:6px; transition:all 0.2s; }
+    .controls button:hover { color:#fff; background:rgba(255,255,255,0.1); }
+    .controls button.exporting { opacity:0.3; pointer-events:none; }
+    .controls .lbl { color:rgba(255,255,255,0.4); font-size:12px; letter-spacing:.05em; }
+    .dvd { width:1px; height:20px; background:rgba(255,255,255,0.12); }
+    .export-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.88); backdrop-filter:blur(8px); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10000; opacity:0; pointer-events:none; transition:opacity 0.3s; }
+    .export-overlay.active { opacity:1; pointer-events:auto; }
+    .spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,0.1); border-top-color:#4A90D9; border-radius:50%; animation:spin .7s linear infinite; margin-bottom:20px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .exp-status { color:rgba(255,255,255,0.6); font-size:14px; font-family:system-ui; }
+  </style>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="viewer">
+  <div class="poster-container" id="posterContainer">
+    <div class="poster">
+
+      <!-- TOP PANEL -->
+      <div class="top-panel">
+        <div class="top-left">
+          <div class="badge-group">
+            <div class="badge"><div class="badge-dot"></div><span>연세대학교</span></div>
+            <div class="badge" style="background:rgba(200,169,81,0.08);border-color:rgba(200,169,81,0.2)">
+              <div class="badge-dot" style="background:#4A90D9"></div>
+              <span style="color:rgba(255,255,255,0.55)">2025 Web App Project</span>
+            </div>
+          </div>
+        </div>
+        <div class="top-center">
+          <div class="proj-label">Project</div>
+          <div class="proj-title">마일리지 <em>수강신청</em> 최적화기</div>
+        </div>
+        <div class="top-right">
+          <div class="url-box">
+            <div class="url-label">Frontend · Deployment</div>
+            <div class="url-val">mileageoptimizer.vercel.app</div>
+          </div>
+          <div class="tech-row">
+            <span class="chip accent">HTML/CSS/JS</span>
+            <span class="chip accent">FastAPI</span>
+            <span class="chip accent">Playwright</span>
+            <span class="chip">Vercel</span>
+            <span class="chip">OpenRouter API</span>
+            <span class="chip">gpt-4o-mini</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2×2 REQ GRID -->
+      <div class="req-grid">
+
+        <div class="req-card c1">
+          <div class="req-num">요구사항 01</div>
+          <div class="req-heading">OpenRouter API<br>LLM 호출 구현</div>
+          <div class="req-divider"></div>
+          <div class="req-body">
+            <strong>OpenRouter API</strong>를 통해 <strong>gpt-4o-mini</strong> 호출.<br>
+            사용자 프로필(학년·이수비율·마일리지 예산)과 과목별 통계 데이터를
+            프롬프트로 전달해 마일리지 배분 전략과 과목별 reasoning을 생성.
+          </div>
+          <div class="req-tag-row">
+            <span class="req-tag">OpenRouter API</span>
+            <span class="req-tag">gpt-4o-mini</span>
+            <span class="req-tag">REST /chat/completions</span>
+          </div>
+        </div>
+
+        <div class="req-card c2">
+          <div class="req-num">요구사항 02</div>
+          <div class="req-heading">Structured Output<br>JSON Schema 활용</div>
+          <div class="req-divider"></div>
+          <div class="req-body">
+            <strong>response_format + JSON Schema</strong>를 사용해 LLM이
+            추천 마일리지·합격확률·risk_level·reasoning을 정해진 스키마로만 반환하도록 강제.<br>
+            <code>additionalProperties: false</code> 및 <code>required</code> 필드 명시 적용.
+          </div>
+          <div class="req-tag-row">
+            <span class="req-tag">Structured Output</span>
+            <span class="req-tag">JSON Schema</span>
+            <span class="req-tag">additionalProperties: false</span>
+          </div>
+        </div>
+
+        <div class="req-card c3">
+          <div class="req-num">요구사항 03</div>
+          <div class="req-heading">Web App<br>브라우저 동작</div>
+          <div class="req-divider"></div>
+          <div class="req-body">
+            단일 <strong>HTML/CSS/JS</strong> 파일로 구현된 SPA.
+            <strong>Vercel</strong>에 배포해 별도 설치 없이 브라우저에서 바로 사용 가능.<br>
+            데이터 스크래핑은 <strong>FastAPI + Playwright</strong> 백엔드가 담당.
+          </div>
+          <div class="req-tag-row">
+            <span class="req-tag">Single HTML SPA</span>
+            <span class="req-tag">Vercel 배포</span>
+            <span class="req-tag">FastAPI 백엔드</span>
+          </div>
+        </div>
+
+        <div class="req-card c4">
+          <div class="req-num">요구사항 04</div>
+          <div class="req-heading">직접 기획한<br>핵심 아이디어</div>
+          <div class="req-divider"></div>
+          <div class="req-body">
+            ① <strong>Playwright</strong>로 연세대 포털 역대 수강신청 데이터 자동 스크래핑<br>
+            ② 내 프로필을 역대 지원자와 <strong>우선순위 키</strong>로 비교해 마일리지별 합격확률 시뮬레이션<br>
+            ③ <strong>확률 곱 최대화 Greedy 알고리즘</strong>으로 총 마일리지 자동 최적 배분
+          </div>
+          <div class="req-tag-row">
+            <span class="req-tag">Playwright 스크래핑</span>
+            <span class="req-tag">합격확률 시뮬레이션</span>
+            <span class="req-tag">Greedy 최적화</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="controls">
+    <span class="lbl">1920 × 1080</span>
+    <span class="dvd"></span>
+    <button onclick="toggleFullscreen()" title="F">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg>
+    </button>
+    <button id="pdfBtn" onclick="exportPDF()" title="P">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="export-overlay" id="exportOverlay">
+  <div class="spinner"></div>
+  <div class="exp-status" id="exportStatus">Exporting...</div>
+</div>
+
+<script>
+  const CANVAS_W = 1920, CANVAS_H = 1080;
+  let isExporting = false;
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  }
+
+  async function exportPDF() {
+    if (isExporting) return;
+    isExporting = true;
+    const overlay = document.getElementById('exportOverlay');
+    const status = document.getElementById('exportStatus');
+    const btn = document.getElementById('pdfBtn');
+    overlay.classList.add('active'); btn.classList.add('exporting');
+    const container = document.getElementById('posterContainer');
+    const saved = container.style.cssText;
+    try {
+      await document.fonts.ready;
+      status.textContent = 'Rendering...';
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({ orientation:'landscape', unit:'px', format:[CANVAS_W, CANVAS_H], hotfixes:['px_scaling'] });
+      container.style.cssText = `width:${CANVAS_W}px;height:${CANVAS_H}px;position:fixed;top:0;left:0;transform:none;overflow:hidden;z-index:9999;border-radius:0;box-shadow:none;`;
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      await new Promise(r => setTimeout(r, 150));
+      const canvas = await html2canvas(container, { width:CANVAS_W, height:CANVAS_H, scale:2, useCORS:true, logging:false });
+      status.textContent = 'Saving PDF...';
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, CANVAS_W, CANVAS_H);
+      pdf.save('mileage-optimizer-poster.pdf');
+    } catch(e) { alert('Export failed: ' + e.message); }
+    finally {
+      container.style.cssText = saved; scalePoster();
+      btn.classList.remove('exporting'); overlay.classList.remove('active'); isExporting = false;
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (isExporting) return;
+    if ((e.key==='f'||e.key==='F') && !e.metaKey && !e.ctrlKey) toggleFullscreen();
+    if ((e.key==='p'||e.key==='P') && !e.metaKey && !e.ctrlKey) { e.preventDefault(); exportPDF(); }
+  });
+
+  function scalePoster() {
+    const c = document.getElementById('posterContainer');
+    const scale = Math.min(window.innerWidth/CANVAS_W, window.innerHeight/CANVAS_H) * 0.92;
+    c.style.transform = `translate(${-CANVAS_W*scale/2}px,${-CANVAS_H*scale/2}px) scale(${scale})`;
+  }
+  window.addEventListener('resize', scalePoster);
+  scalePoster();
+</script>
+</body>
+</html>
